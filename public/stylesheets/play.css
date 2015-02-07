@@ -1,0 +1,376 @@
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+html,
+body {
+  height: 100%;
+  font-family: Roboto, sans-serif;
+  color: #fefefe;
+  background: #222222;
+  padding: 0;
+  margin: 0;
+}
+#top-border,
+#bottom-border,
+#left-border,
+#right-border {
+  background: #fdc81c;
+  position: fixed;
+  z-index: 2;
+}
+#left-border,
+#right-border {
+  top: 0;
+  bottom: 0;
+  width: 6px;
+}
+#left-border {
+  left: 0;
+}
+#right-border {
+  right: 0;
+}
+#top-border,
+#bottom-border {
+  left: 0;
+  right: 0;
+  height: 6px;
+}
+#top-border {
+  top: 0;
+}
+#bottom-border {
+  bottom: 0;
+}
+header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: 6px 6px 0 6px;
+  background: #555555;
+  z-index: 1;
+}
+header h1 {
+  background: #222222 url("../images/c54_header.jpg") no-repeat;
+  height: 70px;
+  padding: 0;
+  margin: 0 35px 0 0;
+  cursor: pointer;
+}
+header h2 {
+  font-size: .8em;
+  padding: 0.3em 14px;
+  margin: 0;
+  text-transform: uppercase;
+  background: #060606;
+}
+header button {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+  background: #fdc81c;
+  background-image: none;
+  border: 1px solid #222222;
+}
+header button.help-btn {
+   background: #222222 url("../images/help_button.png") no-repeat;
+}
+header button.fullscreen-toggle {
+	background: #222222 url("../images/fullscreen_button.png") no-repeat;
+}
+header button.navbar-toggle {
+  top: 35px;
+  background: #222222 url("../images/nav_button.png") no-repeat;
+}
+header button:hover {
+  /*background: #060606;
+  color: #fdc81c;*/
+}
+header ul {
+  position: absolute;
+  width: 100%;
+  background: #fdc81c;
+  margin: 0;
+  padding: 0.6em 14px;
+  list-style-type: none;
+  -webkit-transition: all 0.4s;
+  -o-transition: all 0.4s;
+  transition: all 0.4s;
+  -webkit-transform: translate(0, -100%);
+  -ms-transform: translate(0, -100%);
+  -o-transform: translate(0, -100%);
+  transform: translate(0, -100%);
+  z-index: -1;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+header ul li {
+  margin: .4em 0;
+  font-size: .8em;
+}
+header ul li b {
+  display: block;
+  padding: .4em .8em;
+  background: #ffdf14;
+  color: #060606;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+header .show ul {
+  -webkit-transform: translate(0, 0);
+  -ms-transform: translate(0, 0);
+  -o-transform: translate(0, 0);
+  transform: translate(0, 0);
+}
+#chat {
+  overflow-y: scroll;
+  overflow-wrap: break-word;
+  height: 100%;
+  line-height: 1.3em;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  margin: 0;
+  padding: 20px;
+  padding-top: 110px;
+  margin-right:6px;
+  position: absolute;
+  top: 0;
+}
+#chat p {
+  padding-bottom: 0.7em;
+  line-height: 1.4em;
+  margin: 0;
+  font-size: 0.9em;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;  
+}
+#chat p[data-sender] + p[data-sender]:not([data-state=world]),
+#chat p.error + p.error {
+  margin-top: -0.7em;
+}
+#chat p:last-child {
+  padding-bottom: 0.5em;
+}
+#chat p.chapter, #chat p.gameinfo {
+  font-weight: 700;
+  text-transform: capitalize;
+}
+p[data-sender]:not([data-state=world]):not([data-state=jump]):not([data-state=menu]):before {
+  content: attr(data-sender) ": ";
+  color: #fdc81c;
+  font-style: italic;
+  text-transform: capitalize;
+}
+b[data-command] {
+  font-weight: 700;
+}
+#chat section {
+  transition:color 2s linear;
+}
+#chat section.done {
+  /*color:#bbb;*/
+}
+
+#chat section:last-child b[data-command],
+#chat section b {
+  font-weight: normal;
+}
+#chat section b[data-command] {
+  font-weight: normal;
+}
+#chat section b[data-command]:after,
+#input[data-state=world].chars #input-fake,
+#input[data-state=world].chars #input-command,
+#input[data-state=jump].chars #input-fake,
+#input[data-state=jump].chars #input-command,
+#input[data-state=menu].chars #input-fake,
+#input[data-state=menu].chars #input-command {
+  content: "" attr(data-command) "";
+  color: #060606;
+  vertical-align: middle;
+  font-size: 0.6em;
+  line-height: 1.2em;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: #ffdf14;
+  padding: 0.2em 0.5em;
+}
+
+#input[data-state=world].chars #input-fake #cursor:before,
+#input[data-state=jump].chars #input-fake #cursor:before,
+#input[data-state=menu].chars #input-fake #cursor:before {
+  border-color: white;
+}
+
+#input[data-state=world].chars #input-fake,
+#input[data-state=jump].chars #input-fake,
+#input[data-state=menu].chars #input-fake {
+  letter-spacing: 1px;
+  
+}
+
+#chat section b[data-command]:after {
+  margin: 0 0.4em;
+  position: relative;
+  bottom: 0.2em;
+  opacity: 0;
+  overflow:hidden;
+  display:inline-block;
+  opacity:1;
+  padding: 0.2em 0.5em;
+  margin: 0 1ex;
+  max-width:300px;  
+  transition: 
+    opacity 0.6s ease-out 0.3s, 
+    max-width 0.5s linear 0s, 
+    padding 0.5s linear 0s, 
+    margin 0.5s linear 0s;
+}
+
+#chat section:not(:last-child) b[data-command]:after {
+  opacity:0;
+}
+
+#chat section.done b[data-command]:after {
+  max-width:0px;
+  max-height:1.2em;
+  padding:0;
+  margin:0;
+}
+
+b[data-command]:hover,
+b[data-command]:after:hover,
+b[data-menu]:hover,
+b#embed-link, b#manage-link {
+  cursor: pointer;
+}
+
+span.italic a {
+  color: #fdc81c;
+  font-style: italic;	
+}
+
+span.italic {
+  color: #fdc81c;
+  font-style: italic;	
+}
+
+span.bold {
+  font-weight: 700;
+}
+
+#input[data-state=menu].chars #cursor:before,
+#input[data-state=world].chars #cursor:before,
+#input[data-state=jump].chars #cursor:before {
+  border-color: white;
+}
+body #input-command {
+  background: transparent;
+  font-size: 100%;
+  width: 100%;
+  margin: 0 !important;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  resize: none;
+  color:white;
+}
+
+body.nontouch #input-command {
+  z-index: -1;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+#cursor:before {
+  content: "";
+  width: 2px;
+  border-style: solid;
+  border-color: #fefefe;
+  border-width: 0 0 0 2px;
+  margin-left: -2px;
+  position:relative;
+  left:1px;
+  opacity:1;
+  transition: opacity 0.2s ease-in-out;
+
+}
+#cursor.inverted:before {
+  opacity:0.05;
+}
+#input-fake {
+  white-space: pre-wrap;
+}
+body.touch #input-fake {
+  display: none;
+}
+@media print {
+  b[data-command] {
+    font-weight: normal;
+  }
+  b[data-command]:after {
+    display: none;
+  }
+  #chat {
+    overflow-y: visible;
+  }
+  #input-command {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 636px) {
+	header, #chat, #top-border, #bottom-border {
+		width: 50%;
+	}
+
+	#left-border {
+		margin-left: 25%;
+		left: -6px;
+	}
+
+	#right-border {
+		margin-right: 25%;
+		right: -6px;
+	}
+
+	header, #chat, #top-border, #bottom-border {
+		margin-left: auto;
+		margin-right: auto;
+	}
+	
+	#chat {
+		position: relative;
+	}
+
+	.fullscreen-toggle {
+		display: none;
+	}
+
+}
+
+@media screen and (max-width: 299px) {
+	header h1 {
+		display: none;
+	}
+	
+	header h2 {
+		display: none;
+	}
+	
+}

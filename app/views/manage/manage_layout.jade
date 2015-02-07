@@ -1,0 +1,12 @@
+doctype html
+html(lang='de')
+  head
+    title= title
+    link(rel='stylesheet', href='/stylesheets/manage.css')
+    meta(name='viewport', content='width=device-width, user-scalable=no')
+    <script src="/socket.io/socket.io.js"></script>
+    <script src='//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js'></script>
+    <!--script src='//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js'></script-->
+    <script src='/javascripts/manage.js'></script>
+  body
+    block content

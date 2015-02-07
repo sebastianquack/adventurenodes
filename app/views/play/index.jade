@@ -1,0 +1,28 @@
+extends ./play_layout.jade
+
+block content  
+
+  header#top
+    h1    
+      span.sr-only adventure nodes
+    //h2 untertitle
+    nav(role='navigation')
+      button(type='button', data-menu='help', class='help-btn')
+        span.sr-only Hilfe zum Spiel
+      button(type='button', class='fullscreen-toggle')
+        span.sr-only Toggle fullscreen
+      button(type='button', class='navbar-toggle')
+        span.sr-only Toggle navigation
+      ul
+        li
+          b(data-menu='help') How to play
+        li
+          b(id='embed-link') Embed this node
+        li
+          b(id='manage-link') Node index
+
+  div#chat
+    p(id='input')
+      span(id='input-fake')
+        i(id='cursor')
+      input(type='text', id='input-command', autocomplete='off')

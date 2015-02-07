@@ -1,0 +1,20 @@
+extends ./manage_layout.jade
+
+block content
+
+  div
+    a(href="/") < back to index
+    h1(id="node-title") #{node_title}
+    p To embed this node, copy the following html code into your webpage:
+    p(id="embed-code")
+
+  div(id="iframe_container")
+    
+  div
+    label width 
+      input(id="width" type="text", name="width") 
+    br
+    label height 
+      input(id="height" type="text", name="height") 
+    br
+    input(id="generate-embed" type="button", value="Adjust dimensions")

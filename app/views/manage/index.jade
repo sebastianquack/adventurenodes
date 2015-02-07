@@ -1,0 +1,13 @@
+extends ./manage_layout.jade
+
+block content  
+  h1 Adventure Nodes
+  h2 A platform for collaborative storytelling and shared exploration
+  
+  p An adventure node is a live chatroom with a text adventure game built into it. To jump into a node, just follow the "play" link on one of the nodes below. Watch out - adventure nodes can be interconnected! You never know where you end up. 
+
+  ul(id='adventure-nodes-list')
+  
+  p You can also add your own node! It's just a google spreadsheet that you can edit live. Work alone or invite your friends to edit your node together with you.
+  input(id='node-title', value='title') 
+  button(id='create-node') Create a new node
