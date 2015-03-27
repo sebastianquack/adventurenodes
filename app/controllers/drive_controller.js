@@ -3,14 +3,20 @@
 var mongoose = require('mongoose')
 var AdventureNode = mongoose.model('AdventureNode')
 var google = require('googleapis')
+var Util = require('./util.js')
 
 /* variables */
 
 // authentication info for web app (creating & deleting a specific user's sheets)
-var CLIENT_ID = '7163825488-q83ocjovlutg8e7cuoc9465bun33grvn.apps.googleusercontent.com',
-    CLIENT_SECRET = process.env.googleClientSecret
-    REDIRECT_URL = 'http://adventurenodes.herokuapp.com/google_callback',
-    SCOPE = 'https://www.googleapis.com/auth/drive.file'
+var CLIENT_ID = '7163825488-q83ocjovlutg8e7cuoc9465bun33grvn.apps.googleusercontent.com'
+var CLIENT_SECRET = process.env.googleClientSecret
+
+if(process.env.NODE_ENV)
+  REDIRECT_URL = 'http://adventurenodes.herokuapp.com/google_callback'
+else
+  REDIRECT_URL = 'http://localhost:3000/google_callback'
+
+var SCOPE = 'https://www.googleapis.com/auth/drive.file'
 var auth = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL)
 var url = auth.generateAuthUrl({ scope: SCOPE })
 var drive = google.drive('v2')
@@ -30,9 +36,23 @@ var spreadsheetCache = {}
 
 // respond to user create new node action, send user to google for authorization
 var authorize_create = function(req, res) {
-  req.session.driveAction = "create"
-  req.session.nodeTitle = req.query.title // save title in session for after auth
-  res.redirect(url)
+  
+  // normalize title
+  var title = req.query.title.trim().toLowerCase()
+  console.log(title)
+  
+  // check if node with that title exists
+  AdventureNode.findOne({ title: title }, function(err, node) {
+    if(err) return handleError(err)      
+    console.log(node)
+    if(!node) {
+      req.session.driveAction = "create"
+      req.session.nodeTitle = title // save title in session for after auth
+      res.redirect(url) // request authorization from google
+    } else {
+      res.render('manage', {title: 'adventure nodes', node_title: title, notice: 'A node with that name already exists in the system. Please choose a different name!'})
+    }
+  })  
 }
 
 // respond to user remove spreadsheet action, send user to google for authorization
@@ -230,48 +250,40 @@ var dumpSpreadsheetFromId = function(spreadsheetId) {
     })
 }
 
-// loads spreadsheet data into room object
-var loadRoom = function(room, callback) {
-	get_spreadsheet(room, callback) 
-  return
+var clearCache = function(room) {
+  spreadsheetCache[room] = undefined
 }
 
-// does the work for loadRoom
-var get_spreadsheet = function(room, callback) {
+// loads spreadsheet data into room object
+var loadRoom = function(socket, player, room, node, callback) {
   
   // retrieve spreadsheet cache
   if (spreadsheetCache[room] != undefined) {
     console.log("found " + room + " in spreadsheet cache.")
     callback(spreadsheetCache[room])
     var cacheDelivered = true
+    
+  } else {
+    //Util.write(socket, player, {name: "System"}, Util.linkify("[Loading...]"), "sender", "notice")    
   }
 
-  // define spreadsheet names
+  var spreadsheetId = node.driveId
+  var spreadsheetName = node.title
+  var worksheetId = undefined
+  var worksheetName = undefined
+  var useDefaultWorksheet = true
 
+  // check if worksheet is requested
   var parts = room.split("/")
-
-  spreadsheetName = parts[0]
-
-  if (parts.length == 1) 
-    worksheetName = undefined
-  else 
+  if (parts.length > 1) {
     worksheetName = parts[1]
-
-  //console.log("loading room " + room + " (" + spreadsheetName + "/" + worksheetName +")")
-
-  // retrieve spreadsheet ID cache
-  if (spreadsheetIdCache[spreadsheetName] != undefined && spreadsheetIdCache[spreadsheetName][worksheetName] != undefined) {
-  	spreadsheetId = spreadsheetIdCache[spreadsheetName][worksheetName].spreadsheetId
-  	worksheetId = spreadsheetIdCache[spreadsheetName][worksheetName].worksheetId
-  	spreadsheetName = undefined
-  	worksheetName = undefined
+    useDefaultWorksheet = false
+    
+    // retrieve worksheet ID from cache
+    if (spreadsheetIdCache[spreadsheetId][worksheetName] != undefined) {
+      worksheetId = spreadsheetIdCache[spreadsheetId][worksheetName].worksheetId
+    }
   }
-  else {
-  	spreadsheetId = undefined
-  	worksheetId = undefined
-  }
-  
-  var useDefaultWorksheet = (worksheetId == undefined && worksheetName == undefined)
 
   Spreadsheet.load({
     debug: true,
@@ -294,12 +306,12 @@ var get_spreadsheet = function(room, callback) {
     
   	// populate cache
   	if (typeof spreadsheetIdCache[spreadsheetName] == "undefined") {
-  		spreadsheetIdCache[spreadsheetName] = {} 
-  		spreadsheetIdCache[spreadsheetName][spreadsheet.worksheetName] = {spreadsheetId: spreadsheet.spreadsheetId, worksheetId: spreadsheet.worksheetId}
+  		spreadsheetIdCache[spreadsheetId] = {} 
+  		spreadsheetIdCache[spreadsheetId][spreadsheet.worksheetName] = {worksheetId: spreadsheet.worksheetId}
   		console.log("cached spreadsheet IDs for " + spreadsheetName + " / " + spreadsheet.worksheetName + " as " + spreadsheet.spreadsheetId + " / " + spreadsheet.worksheetId)
   	}
   	else if (typeof spreadsheetIdCache[spreadsheetName][spreadsheet.worksheetName] == "undefined") {
-  		spreadsheetIdCache[spreadsheetName][spreadsheet.worksheetName] = {spreadsheetId: spreadsheet.spreadsheetId, worksheetId: spreadsheet.worksheetId}
+  		spreadsheetIdCache[spreadsheetId][spreadsheet.worksheetName] = {worksheetId: spreadsheet.worksheetId}
   		console.log("cached spreadsheet IDs for " + spreadsheetName + " / " + spreadsheet.worksheetName + " as " + spreadsheet.spreadsheetId + " / " + spreadsheet.worksheetId)
   	}
     
@@ -336,5 +348,5 @@ module.exports.authorize_remove = authorize_remove
 module.exports.handle_callback = handle_callback
 module.exports.dumpSpreadsheetFromId = dumpSpreadsheetFromId
 module.exports.loadRoom = loadRoom
-
+module.exports.clearCache = clearCache
 

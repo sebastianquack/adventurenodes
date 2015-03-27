@@ -14,6 +14,10 @@ var capitaliseFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+String.prototype.capitalize = function() {
+    return capitaliseFirstLetter(this)
+}
+
 // lower case and trim
 var lowerTrim = function(input) {
   if(input) return input.trim().toLowerCase()
@@ -43,11 +47,8 @@ var getObject = function(input) {
 // parse world descriptions for links
 var linkify = function(text) {
     
-  text = text.replace(/\/(.*?)\//g,'<span class="italic">$1</span>') // italic
-  text = text.replace("ringlokschuppen.ruhr", "<a href='http://ringlokschuppen.ruhr' target='_parent'>ringlokschuppen.ruhr</a>")
-      
+  text = text.replace(/\/(.*?)\//g,'<span class="italic">$1</span>') // italic      
   text = text.replace(/\*(.*?)\*/g,'<span class="bold">$1</span>') // bold
-
   text = text.replace(/\[(.*?)\|(.*?)\]/g,'<b data-command="$2">$1</b>') // parse old links
   text = text.replace(/\[(.*?)\]/g,'<b data-command="$1"></b>') // parse new links
     
@@ -93,6 +94,7 @@ var write = function(socket, player, emitter, value, mode, type, recipient) {
     player_name: (mode == "sender" || mode == "socket") ? player.name : null, 
     player_room: (mode == "sender" || mode == "socket") ? player.currentRoom : null, 
     player_state: (mode == "sender" || mode == "socket") ? player.state : null,
+    nodeLink: player.currentNode ? player.currentNode.driveLink : null,
     value: value, 
     type: type,
     ip: ipLog
@@ -140,6 +142,25 @@ var write = function(socket, player, emitter, value, mode, type, recipient) {
   }  
 }
 
+var getClientIp = function(req) {
+  var ipAddress;
+  // Amazon EC2 / Heroku workaround to get real client IP
+  var forwardedIpsStr = req.header('x-forwarded-for'); 
+  if (forwardedIpsStr) {
+    // 'x-forwarded-for' header may return multiple IP addresses in
+    // the format: "client IP, proxy 1 IP, proxy 2 IP" so take the
+    // the first one
+    var forwardedIps = forwardedIpsStr.split(',');
+    ipAddress = forwardedIps[0];
+  }
+  if (!ipAddress) {
+    // Ensure getting client IP address still works in
+    // development environment
+    ipAddress = req.connection.remoteAddress;
+  }
+  return ipAddress;
+}
+
 module.exports.capitaliseFirstLetter = capitaliseFirstLetter
 module.exports.linkify = linkify
 module.exports.getCommand = getCommand
@@ -149,3 +170,4 @@ module.exports.write = write
 module.exports.lowerTrim = lowerTrim
 module.exports.socketGetPlayer = socketGetPlayer
 module.exports.playerGetSockets = playerGetSockets
+module.exports.getClientIp

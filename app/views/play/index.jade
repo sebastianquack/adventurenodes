@@ -5,7 +5,6 @@ block content
   header#top
     h1    
       span.sr-only adventure nodes
-    //h2 untertitle
     nav(role='navigation')
       button(type='button', data-menu='help', class='help-btn')
         span.sr-only Hilfe zum Spiel
@@ -17,9 +16,18 @@ block content
         li
           b(data-menu='help') How to play
         li
-          b(id='embed-link') Embed this node
+          b(data-menu='rename') Choose a different name
         li
-          b(id='manage-link') Node index
+          b(data-menu='restart node') Restart this node
+        li
+          b(data-menu='warp lobby') Go back to lobby
+        li
+          b(id='manage-link') Node management area
+        li
+          a(id='edit-link' target='_blank') Edit this node
+        li
+          b(id='embed-link') Embed this node
+
 
   div#chat
     p(id='input')

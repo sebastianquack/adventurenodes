@@ -36,10 +36,10 @@ function submitCommand() {
   if (val.trim()=="") return
   
   if(val.trim() == "logout") {
-    $.cookie('city54_uuid', uuid.v1(), { expires: 31 }) // create new uuid
+    $.cookie('an_uuid', uuid.v1(), { expires: 31 }) // create new uuid
     location.reload()
   } else {
-    socket.emit('player-action', { uuid: $.cookie('city54_uuid'), input: val })
+    socket.emit('player-action', { uuid: $.cookie('an_uuid'), input: val })
   }
   $('#input-command').val('')
   updateInput()
@@ -47,7 +47,7 @@ function submitCommand() {
 
 // submit a menu command to the server and clear input field 
 function submitMenuCommand(val) {
-  socket.emit('player-action', { uuid: $.cookie('city54_uuid'), input: val, menu: true })
+  socket.emit('player-action', { uuid: $.cookie('an_uuid'), input: val, menu: true })
   $('#input-command').val('')
   updateInput()
 }
@@ -98,18 +98,9 @@ fillCommandGaps = function() {
 }
 
 /* let's go! */
-
 $(document).ready(function() {
 
   touchDevice = 'ontouchstart' in window || !!navigator.msMaxTouchPoints; // detect touch device
-
-  /*
-  // detect touch device (roughly)
-  $('body').on("touchstart", function() {
-    $('body').removeClass("nontouch")
-    $('body').addClass("touch")
-  })
-  */
 
   // local player object
   player = {}
@@ -118,8 +109,8 @@ $(document).ready(function() {
   socket = io.connect(window.location.origin)
   
   // check for cookie
-  if(!$.cookie('city54_uuid')) {
-    $.cookie('city54_uuid', uuid.v1(), { expires: 31 }) // create new uuid
+  if(!$.cookie('an_uuid')) {
+    $.cookie('an_uuid', uuid.v1(), { expires: 31 }) // create new uuid
   }
   
   // check url to see if player is targeting specific node
@@ -133,23 +124,23 @@ $(document).ready(function() {
   
   // send cookie to server for check 
   socket.on('connect', function() { 
-    socket.emit('player-action', { uuid: $.cookie('city54_uuid'), firstPlayerAction: true, target_node: target_node })
+    socket.emit('player-action', { uuid: $.cookie('an_uuid'), firstPlayerAction: true, target_node: target_node })
   })
+  
   /* events */
+
+  $(window).on("popstate", function() {
+    location.reload() // currently just does a hard reload - ideally solve via sockets
+  })
 
   // a chat item comes in from the server
   socket.on('chat-update', function (data) {
-    
-    console.log(data)
 
     if (data.player_room != null && player.currentRoom != data.player_room || data.type == "chapter") {
       $('#chat').append($('<section>'))
-      //if (["bergkamen","bönen","fröndenberg","holzwickede","kamen","lünen","schwerte","selm","unna","werne"].indexOf(player.currentRoom) != -1) $('body').trigger('startRumble');
     }
 
-
-    //$('body').trigger('stopRumble');
-
+    var previousRoom = player.currentRoom // save room for later
     player = {
       name:         (data.player_name != null) ? data.player_name : player.name,
       currentRoom:  (data.player_room != null) ? data.player_room : player.currentRoom,
@@ -196,6 +187,21 @@ $(document).ready(function() {
         complete: fillCommandGaps,
         always: function(){}
     })
+    
+    // update the current node links to drive
+    if(data.nodeLink) {
+      $('#edit-link').css("display", "block")
+      $('#edit-link').attr("href", data.nodeLink)
+    } else {
+      $('#edit-link').hide()
+    }
+    
+    // update location bar in browser
+    if(player.currentRoom.split("/")[0] != previousRoom.split("/")[0]) {
+      var newPath = '/play/' + player.currentRoom.split("/")[0]
+      console.log("pushState: " + newPath)
+      history.pushState(null, null, newPath)
+    }
     
   })
 
@@ -245,13 +251,13 @@ $(document).ready(function() {
       submitCommand()
     }
   })
-  
-  $('header h1').click(function() {
-    window.open("http://www.ringlokschuppen.de/ringlokschuppen/produktionen/vorschau-2014/festivals/54-stadt-das-ende-der-zukunft/");
-  })
-  
+    
   $('.fullscreen-toggle').click(function() {
-    window.open("http://city54.herokuapp.com/")
+    var play_url = location.protocol + '//' + location.hostname + (location.port ? ':'+location.port : '') + '/play'
+    if(target_node) {
+      play_url += '/' + target_node
+    } 
+    window.open(play_url)
   })
   
   $('#embed-link').click(function() {
@@ -262,22 +268,15 @@ $(document).ready(function() {
     window.location = embed_url
   })
 
+  $('#edit-link').click(function() {
+    $('nav').removeClass('show');
+  })
+
+
   $('#manage-link').click(function() {
     var manage_url = location.protocol + '//' + location.hostname + (location.port ? ':'+location.port : '') + '/'
     window.location = manage_url
   })
-
-
-  // Initialize jRumble on Selector
-  //$('body').jrumble();
-
-  /*
-  // Start rumble on element
-  $('body').trigger('startRumble');
-
-  // Stop rumble on element
-  $('body').trigger('stopRumble');
-  */
 
   // blink cursor
   setInterval(function(){ $("#cursor").toggleClass("inverted")}, 650);

@@ -3,13 +3,14 @@
 var mongoose = require('mongoose')
 var Player = mongoose.model('Player')
 var ChatItem = mongoose.model('ChatItem')
+var AdventureNode = mongoose.model('AdventureNode')
 
+var Drive = require('./drive_controller.js')
 var Util = require('./util.js')
-//var Bots = require('./bot_controller.js')
 var Chat = require('./chat_controller.js')
 var Intro = require('./intro_controller.js')
 
-var rooms = ['lobby']
+var startingNodes = ['lobby']
 var RegexPrivateRooms = "(tretroller|stahlgleiter|mini\-van|kart)$"
 var Spreadsheets = require('drive_controller')
 
@@ -89,9 +90,34 @@ function setWV(vw) {
   worldVariables[vw.name] = vw.value
 }
 
+// prepare player for movement
+function setRoom(player, room, socket) {
+
+  // always fix sockets (in case of reconnect)
+  if (player.currentRoom != undefined && player.currentRoom != "") socket.leave(player.currentRoom)
+  socket.join(room)
+
+  // always clear the chat
+  player.currentChat = "" 
+
+  // update player on movement
+  if (room != player.currentRoom) {
+    
+    // implement shorthand for subrooms in one node
+    if(room.split("/")[0] == ".") {
+      room = player.currentRoom.split("/")[0] + "/" + room.split("/")[1]
+    }
+
+    player.previousRoom = player.currentRoom
+    player.currentRoom = room
+    player.previousChat = "" // a new chance for chat
+         
+  }
+}
+
 // move player to a room
 function enterRoom(player, room, socket) {
-  player.setRoom(room, socket)
+  setRoom(player, room, socket)
   player.currentRoomData = {}
   player.save()
   //if (reply == "") chat(socket, {name: "System"}, "Du verlässt den Raum...", "sender") // todo get response from db        
@@ -158,18 +184,6 @@ function processRoomCommand(socket, player, command, object) {
         exit = data.exit[i]
       }  
 
-      /*
-      // enter bot
-      if (data.bot != undefined && data.bot[i].length > 0) {
-        bot = data.bot[i]
-        reply += "Du sprichst jetzt mit " + Util.capitaliseFirstLetter(bot) + ". Verabschiede dich, um das Gespräch zu beenden."
-      }
-      */
-
-      // play audio
-      if (data.audio != undefined && data.audio[i].length > 0) {
-        // play audio
-      }
     }
   }
   // send reply
@@ -177,7 +191,7 @@ function processRoomCommand(socket, player, command, object) {
     Util.write(socket, player, {name: "System"}, reply, "sender")
   }
 
-  // set effects
+  // set variable effects
   effects.forEach(function(effect) { setWV(effect) })
 
   // leave room
@@ -185,56 +199,99 @@ function processRoomCommand(socket, player, command, object) {
     enterRoom(player, exit, socket)
   }  
 
-  /*
-  // or enter bot
-  else if (bot != "") {
-    player.state = "bot"
-    player.currentBot = bot
-    console.log("entering botchat " + player.currentBot)
-    player.save()
-    Bots.handleInput(socket, player, null)
-  }
-  */
-
   return roomCommandFound
 }
+
+// function to process room data loaded from google spreadsheet
+function roomEntered(socket, player, data) {
+
+  // no data delivered - send player back to previous room (there is a slight risk of infinite loops here)
+  if (data == undefined) {
+    console.log("room " + player.currentRoom + " delivered no data. sending player back to " + player.previousRoom)
+    Util.write(socket, player, {name: "System"}, "Error: Room data could not be loaded.", "sender", "error")
+    if(player.previousRoom) {
+      player.currentRoom = player.previousRoom
+      Spreadsheets.loadRoom(socket, player, player.currentRoom, function(data) {
+        roomEntered(socket, player, data)
+      })
+    }
+    return
+  }
+  
+  // save room data in player
+  setRoom(player, player.currentRoom, socket)
+  Util.write(socket, player, {name: "System"}, player.currentRoom.replace("/",", ") + " — \time", "sender", "chapter")
+  //if (player.currentRoom.search(RegexPrivateRooms) == -1) Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name + Util.linkify(" ist jetzt auch hier. [sprich " + player.name + "]"), "everyone else")
+  player.currentRoomData = data;
+  player.inMenu = false
+  player.save()
+  
+  processRoomCommand(socket, player, "base", "") // display base description of room on entry
+  announceRoomPlayers(socket, player, true) // announce player entry to other players
+}     
 
 // handle world exploration
 var handleInput = function(socket, player, input) {  
 
   input = Util.lowerTrim(input)
 
-  if(!input) {
-    var roomEntered = function(data){
-      if (data == undefined) {
-        // no data delivered - send player back to previous room (there is a slight risk of infinite loops here)
-        console.log("room " + player.currentRoom + " delivered no data. sending player back to " + player.previousRoom)
-        if(player.previousRoom) {
-          player.currentRoom = player.previousRoom
-          Spreadsheets.loadRoom(player.currentRoom, roomEntered)
+  // there is no player input: the player just entered the room
+  if(!input) { 
+    
+    // determine the name of the node the player wants to enter
+    var requestedNode = player.currentRoom.split("/")[0] 
+
+    // if player doesn't know where to be - assign to random node
+    if(!requestedNode || player.currentRoom == undefined) {
+      requestedNode = startingNodes[Math.floor(Math.random() * startingNodes.length)]
+      setRoom(player, requestedNode, socket)
+    }
+    
+    console.log("looking for Node " + requestedNode)
+    
+    // search node database by title
+    AdventureNode.findOne({ title: requestedNode }, function(err, node) {
+      if(err) return Util.handleError(err)
+      
+      // found the node
+      if(node) {
+        console.log("Moving player to node:")
+        console.log(node)
+
+        // save the node
+        player.currentNode = node
+        
+        // determine and save the name of the node / city to history
+        if(player.cities.indexOf(node.title) == -1) {
+          player.cities.push(node.title)
         }
-        return
+        player.save()
+        
+        // load room data from google and save it to player
+        Spreadsheets.loadRoom(socket, player, player.currentRoom, node, function(data) {
+          roomEntered(socket, player, data)
+        })      
+              
+      // no node found
+      } else {
+        Util.write(socket, player, {name: "System"}, "Error: Node not found.", "sender", "error")
       }
-      player.setRoom(player.currentRoom, socket)
-      Util.write(socket, player, {name: "System"}, player.currentRoom.replace("/",", ") + " — \time", "sender", "chapter")
-      //if (player.currentRoom.search(RegexPrivateRooms) == -1) Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name + Util.linkify(" ist jetzt auch hier. [sprich " + player.name + "]"), "everyone else")
-      player.currentRoomData = data;
-      player.inMenu = false
-      player.save()
-      processRoomCommand(socket, player, "base", "")
-      announceRoomPlayers(socket, player, true)
-    }     
-    Spreadsheets.loadRoom(player.currentRoom, roomEntered)
+      
+    })
+    
     return
   }
 
+  // player entered a command
   var command = Util.getCommand(input)
   var object = Util.getObject(input)
 
+  // check if player entered a command speficied in spreadsheet
   if (command != "base") {
     roomCommandFound = processRoomCommand(socket, player, command, object)
   }
 
+  // the command palyer entered was not specified, try to interpret it as general system command
   if (!roomCommandFound) {
 
     // wo bin ich?
@@ -304,20 +361,6 @@ var handleInput = function(socket, player, input) {
         var target = object
         enterRoom(player, target, socket)
         break
-        /*case "warpchat":
-        var targetBot = object.split(" in ")[0]
-        if(targetBot && object.split(" in ").length > 1) {
-          player.state = "bot"
-          player.currentBot = targetBot
-          player.currentRoom = object.split(" in ")[1]
-          //player.currentRoomData = {}
-          console.log("entering botchat " + player.currentBot)
-          player.save(function() {
-            Bots.handleInput(socket, player, null)
-          })
-          
-        }
-        break*/
 
       case "admin":
           switch(object) {
@@ -327,12 +370,6 @@ var handleInput = function(socket, player, input) {
           }
         break
       default:
-        //Util.write(socket, player, player, input, "everyone else and me")
-
-        //if (!object) var apologies = (command + "en").replace(/ee/,"e") + " nicht möglich."
-        //else var apologies = object + " lässt sich nicht " + (command + "en").replace(/ee/,"e") + "."
-        //Util.write(socket, player, {name: "System"}, apologies, "sender", "error")
-
         if (!object) var apologies = "You try to " + command + ", but it doesn't work."
         else var apologies = "You try to " + command + " the " + object + ", but it doesn't work."
         Util.write(socket, player, {name: "System"}, apologies, "sender", "error")        
@@ -343,5 +380,6 @@ var handleInput = function(socket, player, input) {
 
 
 /* expose functionality */
-module.exports.rooms = rooms
+module.exports.setRoom = setRoom
+module.exports.enterRoom = enterRoom
 module.exports.handleInput = handleInput

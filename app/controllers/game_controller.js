@@ -5,29 +5,9 @@ var Player = mongoose.model('Player')
 
 var Util = require('./util.js')
 var World = require('./world_controller.js')
-//var Bots = require('./bot_controller.js')
 var Chat = require('./chat_controller.js')
 var Intro = require('./intro_controller.js')
 var Menu = require('./menu_controller.js')
-
-function getClientIp(req) {
-  var ipAddress;
-  // Amazon EC2 / Heroku workaround to get real client IP
-  var forwardedIpsStr = req.header('x-forwarded-for'); 
-  if (forwardedIpsStr) {
-    // 'x-forwarded-for' header may return multiple IP addresses in
-    // the format: "client IP, proxy 1 IP, proxy 2 IP" so take the
-    // the first one
-    var forwardedIps = forwardedIpsStr.split(',');
-    ipAddress = forwardedIps[0];
-  }
-  if (!ipAddress) {
-    // Ensure getting client IP address still works in
-    // development environment
-    ipAddress = req.connection.remoteAddress;
-  }
-  return ipAddress;
-}
 
 /* expose functionality */
 module.exports.init = function (io) {
@@ -46,21 +26,13 @@ module.exports.init = function (io) {
         Player.findOne({ uuid: data.uuid }, function(err, player) {
           if(err) return Util.handleError(err)
 
+          // no player yet, create one
           if(!player) {
-
-            // no player yet, create one
             player = new Player({ uuid: data.uuid }) // use data as name
             player.state = "welcome"
             player.save()
-
           } 
           
-          // if page was reloaded, save node requested through url to player
-          if(data.firstPlayerAction && data.target_node) {
-            console.log('moving player to ' + data.target_node)
-            player.setRoom(data.target_node, socket)
-          }
-
           // connect sockets and players (player can have several sockets)
           socket.set("uuid", player.uuid) // or: add socket id to player (and clean the list up)
           socket.join(player.uuid)
@@ -91,9 +63,6 @@ module.exports.init = function (io) {
               switch(player.state) {
                 case "world":
                   break
-                case "bot":
-                  Bots.leaveBot(player)
-                  break
                 case "chat":
                   player.previousChat = player.currentChat            
                   player.currentChat = ""
@@ -113,11 +82,14 @@ module.exports.init = function (io) {
               // check player state and hand off to different parsers
               switch(player.state) {
                 case "world": 
+                  // if page was just reloaded, save node requested through url to player
+                  if(data.firstPlayerAction && data.target_node) {
+                    console.log('moving player to ' + data.target_node)
+                    World.setRoom(player, data.target_node, socket)
+                  }  
+                  // hand off to world controller
                   World.handleInput(socket, player, data.input)
                   break
-/*                case "bot":
-                  Bots.handleInput(socket, player, data.input)  
-                  break*/
                 case "chat":
                   Chat.handleInput(socket, player, data.input)  
                   break              

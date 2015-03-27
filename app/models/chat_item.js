@@ -10,6 +10,7 @@ var ChatItemSchema = new Schema({
   sender_name: { type: String, default: '' },
   player_name: { type: String, default: '' },
   player_room: { type: String, default: ''},
+  nodeLink: { type: String, default: ''},
   player_state: { type: String, default: ''},
   value: { type: String, default: '' },
   type: { type: String, default: '' },  

@@ -16,7 +16,7 @@ $(document).ready(function() {
         "<li>" + entry.title +
         " <a href='/play/" + entry.title + "'>play</a> " +
         " <a href='/embed/" + entry.title + "'>embed</a> " +
-        " <a href='" + entry.driveLink + "'>edit</a>" +
+        " <a target='_blank' href='" + entry.driveLink + "'>edit</a>" +
         " <a class='remove-link' href='/manage/remove/"+ entry.driveId + "'>remove</a>"+
         "</li>"
       )
@@ -38,7 +38,8 @@ $(document).ready(function() {
   $('#node-title').click(function() {
     if($('#node-title').val() == 'title') {
       $('#node-title').val('')
-    }
+    } 
+    $('#notice').fadeOut()
   })
 
   // submit a new title to create a node
