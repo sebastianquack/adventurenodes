@@ -1,3 +1,11 @@
+body {
+	padding: 20px;
+}
+
+* {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
 #iframe_container {
 	margin-bottom: 2em;
 }

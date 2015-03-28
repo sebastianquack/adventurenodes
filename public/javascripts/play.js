@@ -129,8 +129,11 @@ $(document).ready(function() {
   
   /* events */
 
+  var everPushedSomething = false
   $(window).on("popstate", function() {
-    location.reload() // currently just does a hard reload - ideally solve via sockets
+    if(everPushedSomething) { // ignore initial event fire on page load
+      location.reload() // currently just does a hard reload - ideally solve via sockets
+    }
   })
 
   // a chat item comes in from the server
@@ -196,11 +199,14 @@ $(document).ready(function() {
       $('#edit-link').hide()
     }
     
-    // update location bar in browser
-    if(player.currentRoom.split("/")[0] != previousRoom.split("/")[0]) {
-      var newPath = '/play/' + player.currentRoom.split("/")[0]
-      console.log("pushState: " + newPath)
-      history.pushState(null, null, newPath)
+    if(previousRoom) {
+      // update location bar in browser
+      if(player.currentRoom.split("/")[0] != previousRoom.split("/")[0]) {
+        var newPath = '/play/' + player.currentRoom.split("/")[0]
+        console.log("pushState: " + newPath)
+        history.pushState(null, null, newPath)
+        everPushedSomething = true
+      }
     }
     
   })

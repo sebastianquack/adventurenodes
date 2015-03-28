@@ -33,7 +33,6 @@ $(document).ready(function() {
 
   })
 
-
   // make input field blank when first clicked
   $('#node-title').click(function() {
     if($('#node-title').val() == 'title') {
@@ -45,7 +44,7 @@ $(document).ready(function() {
   // submit a new title to create a node
   $('#create-node').click(function() {
     if($('#node-title').val() != '' && $('#node-title').val() != 'title') {
-      window.location = "/manage/create?title=" + $('#node-title').val()      
+      window.location = "/manage/create?title=" + $('#node-title').val() + "&id=" + $('#node-base').find(':selected').data('id')      
     }    
   })
 

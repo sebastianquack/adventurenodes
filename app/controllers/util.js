@@ -34,14 +34,32 @@ var getCommand = function(input) {
   }
 }
 
+var ignoreList = ['the', 'to', 'at', 'in', 'into', 'against']
+
 // returns string without first word
 var getObject = function(input) {
   var words = input.split(" ")
   if(words.length < 2) {
     return ""
   }
+  if(words.length == 2) {
+    return words[1]  
+  }
+  if(words.length >= 3) {
+    if (['the', 'to', 'at', 'in', 'into'].indexOf(words[1]) >= 0) {
+      if(words.length == 3) {
+        return words[2] // eat the cake -> use cake
+      }
+      if (words.length > 3) {
+        if (ignoreList.indexOf(words[2]) >= 0) {
+          return words[3] // jump on the cake -> use cake
+        }
+      }
+    }
+  }
+  // fallback: just return everything except first word as object
   words.splice(0,1)
-  return words.join(" ")
+  return words.join(" ") 
 }
 
 // parse world descriptions for links

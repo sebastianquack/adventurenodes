@@ -16,10 +16,11 @@ if(process.env.NODE_ENV)
 else
   REDIRECT_URL = 'http://localhost:3000/google_callback'
 
-var SCOPE = 'https://www.googleapis.com/auth/drive.file'
-var auth = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL)
-var url = auth.generateAuthUrl({ scope: SCOPE })
 var drive = google.drive('v2')
+var auth = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL)
+var SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive']
+var url = auth.generateAuthUrl({ scope: SCOPES })
+google.options({ auth: auth }); // set auth as a global default
 
 // authentication info for service account (reading & editing everyone's sheets)
 var googleConf = {
@@ -39,14 +40,19 @@ var authorize_create = function(req, res) {
   
   // normalize title
   var title = req.query.title.trim().toLowerCase()
-  console.log(title)
+  
+  // check if title contains illegal characters
+  if(!/^[a-z0-9]+$/i.test(title))  {
+    res.render('manage', {title: 'adventure nodes', node_title: title, notice: 'Please only use alphanumeric characters in your node title'})
+    return
+  }
   
   // check if node with that title exists
   AdventureNode.findOne({ title: title }, function(err, node) {
     if(err) return handleError(err)      
-    console.log(node)
     if(!node) {
       req.session.driveAction = "create"
+      req.session.nodeBaseId = req.query.id
       req.session.nodeTitle = title // save title in session for after auth
       res.redirect(url) // request authorization from google
     } else {
@@ -82,7 +88,8 @@ var getAccessToken = function(code, callback) {
         console.log('Error while trying to retrieve access token', err)
         return
       }
-      auth.credentials = tokens
+      //auth.credentials = tokens
+      auth.setCredentials(tokens)
       callback()
     })
 }
@@ -90,14 +97,17 @@ var getAccessToken = function(code, callback) {
 // create new spreadsheet 
 var new_spreadsheet = function(req, res) {
   getAccessToken(req.query.code, function() {
-    upload(req.session.nodeTitle, function() { // retrieve title
+    upload(req.session.nodeBaseId, req.session.nodeTitle, function() { // retrieve title
       res.redirect('/')      
     })
   })
 }
 
 // creates a new spreadsheet on user's account, shares with service account
-var upload = function(title, callback) {
+var upload = function(id, title, callback) {
+    
+  // create a new empty spreadsheet in users drive
+  if(typeof id == 'undefined' || id == 'undefined' || !id) {
     drive.files.insert({
       resource: {
         title: title,
@@ -105,40 +115,63 @@ var upload = function(title, callback) {
       },
       auth: auth
     }, function(err, data) {
-      // console.log(data) // output and save google data of sheet?
-      var new_adventure_node = new AdventureNode({ 
-        driveId: data.id,
-        driveLink: data.alternateLink, // this is how a user can access her file
-        title: data.title
-      }) 
-      new_adventure_node.save(callback)
-      
-      // add permission to service account for accessing the file
-      drive.permissions.insert({
-        fileId: data.id,
-        sendNotificationEmails: false,
-        resource: {
-          role: "writer",
-          type: "user",
-          value: "7163825488-co5a1u10nfuscftajim053e9ht6kpkqi@developer.gserviceaccount.com" 
-        },
-        auth: auth
-      }, function(err, permission_data) {
-        if(err) {
-          console.log(err)
-          return
-        }
-        console.log(permission_data)
-        new_adventure_node.drivePermissionId = permission_data.id
-        new_adventure_node.save()
-        baseSetupSpreadsheet(data.id)
-      })
-            
-    })  
+      createNodeAndSetupPermissions(data, function() {
+        baseSetupSpreadsheet(data.id, callback) // setup table header
+      })                         
+    })        
+  // if fileId is specified, copy spreadsheet to user drive
+  } else {
+    drive.files.copy({
+      fileId: id,
+      resource: { 
+        title: title,
+        parents: [{id: "root"}]
+       }
+    }, function(err, data) {
+      if(err) { 
+        console.log(err) // copy works but this throws 404 file not found error - why??
+        callback()
+        return
+      }
+      createNodeAndSetupPermissions(data, callback)       
+    })
+  }
+}
+
+var createNodeAndSetupPermissions = function(data, callback) {
+  
+  // create node object to link to google spreadsheet
+  var new_adventure_node = new AdventureNode({ 
+    driveId: data.id,
+    driveLink: data.alternateLink, // this is how a user can access her file
+    title: data.title
+  }) 
+  new_adventure_node.save()
+  
+  // add permission to service account for accessing the spreadsheet
+  drive.permissions.insert({
+    fileId: new_adventure_node.driveId,
+    sendNotificationEmails: false,
+    resource: {
+      role: "writer",
+      type: "user",
+      value: "7163825488-co5a1u10nfuscftajim053e9ht6kpkqi@developer.gserviceaccount.com" 
+    },
+    auth: auth
+  }, function(err, permission_data) {
+    if(err) {
+      console.log(err)
+      callback()
+      return
+    }
+    //console.log(permission_data)
+    new_adventure_node.drivePermissionId = permission_data.id
+    new_adventure_node.save(callback)
+  })
 }
 
 // fills spreadsheet with basic data
-var baseSetupSpreadsheet = function(spreadsheetId) {
+var baseSetupSpreadsheet = function(spreadsheetId, callback) {
   
     Spreadsheet.load({
       debug: true,
@@ -158,6 +191,7 @@ var baseSetupSpreadsheet = function(spreadsheetId) {
         if(err) {
           console.log(err)
         }
+        callback()
       }) 
     })
 }

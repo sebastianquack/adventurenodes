@@ -44,6 +44,7 @@ module.exports = function (app) {
   // play specific node
   app.get('/play/:node_title', function (req, res) {
     var node_title = req.params.node_title
+    console.log(node_title)
     res.render('play', {node_title: node_title})
   })
 

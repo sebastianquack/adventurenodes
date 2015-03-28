@@ -59,7 +59,8 @@ header {
   z-index: 1;
 }
 header h1 {
-  background: #222222 url("../images/c54_header.jpg") no-repeat;
+  /*background: #222222 url("../images/c54_header.jpg") no-repeat;*/
+	display: none;
   height: 70px;
   padding: 0;
   margin: 0 35px 0 0;
@@ -145,7 +146,7 @@ header .show ul {
   -moz-box-sizing: border-box;
   margin: 0;
   padding: 20px;
-  padding-top: 110px;
+  /*padding-top: 110px;*/
   margin-right:6px;
   position: absolute;
   top: 0;

@@ -20,8 +20,10 @@ module.exports = function (app) {
   
   app.set('view engine', 'jade');
   app.set('views', config.root + '/app/views')
-  app.set('port', process.env.PORT || 3000);
+  app.set('port', process.env.PORT || 3000)
+  
+  app.use(express.favicon(config.root + '/public/images/favicon.ico'))
 
-  app.use(express.favicon(config.root + '/public/images/favicon.ico'));
+  app.disable('etag') // prevent weird caching reload issue in safari
 
 }

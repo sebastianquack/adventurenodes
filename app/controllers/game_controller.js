@@ -18,9 +18,12 @@ module.exports.init = function (io) {
 
     // client connects
     io.sockets.on('connection', function (socket) {
+      console.log('connected')
+      console.log(socket)
 
       // client detects player action
       socket.on('player-action', function (data) {    
+        console.log(data)
 
         // check if player exists
         Player.findOne({ uuid: data.uuid }, function(err, player) {
@@ -49,6 +52,11 @@ module.exports.init = function (io) {
             return
           }
 
+          if(data.firstPlayerAction && data.target_node) {
+            console.log('moving player to ' + data.target_node)
+            World.setRoom(player, data.target_node, socket)
+          }  
+          
           if (player.state == "welcome") {
             // new player action
             Intro.handleInput(socket, player, null)
@@ -82,12 +90,6 @@ module.exports.init = function (io) {
               // check player state and hand off to different parsers
               switch(player.state) {
                 case "world": 
-                  // if page was just reloaded, save node requested through url to player
-                  if(data.firstPlayerAction && data.target_node) {
-                    console.log('moving player to ' + data.target_node)
-                    World.setRoom(player, data.target_node, socket)
-                  }  
-                  // hand off to world controller
                   World.handleInput(socket, player, data.input)
                   break
                 case "chat":

@@ -10,7 +10,7 @@ var Util = require('./util.js')
 var Chat = require('./chat_controller.js')
 var Intro = require('./intro_controller.js')
 
-var startingNodes = ['lobby']
+var startingNodes = ['example1']
 var RegexPrivateRooms = "(tretroller|stahlgleiter|mini\-van|kart)$"
 var Spreadsheets = require('drive_controller')
 
@@ -210,10 +210,7 @@ function roomEntered(socket, player, data) {
     console.log("room " + player.currentRoom + " delivered no data. sending player back to " + player.previousRoom)
     Util.write(socket, player, {name: "System"}, "Error: Room data could not be loaded.", "sender", "error")
     if(player.previousRoom) {
-      player.currentRoom = player.previousRoom
-      Spreadsheets.loadRoom(socket, player, player.currentRoom, function(data) {
-        roomEntered(socket, player, data)
-      })
+      enterRoom(player, player.previousRoom, socket)
     }
     return
   }
