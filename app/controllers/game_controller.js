@@ -19,7 +19,7 @@ module.exports.init = function (io) {
     // client connects
     io.sockets.on('connection', function (socket) {
       console.log('connected')
-      console.log(socket)
+      //console.log(socket)
 
       // client detects player action
       socket.on('player-action', function (data) {    

@@ -15,14 +15,7 @@ var handleInput = function(socket, player, input) {
 
   switch(Util.lowerTrim(input)) {
 
-    case "rename":
-      player.inMenu = false
-      player.state = "welcome"
-      player.save()
-      Intro.handleInput(socket, player, "")
-      break
-      
-    case "restart node":
+    case "restart":
       player.inMenu = false
       player.state = "world"
       player.save()
@@ -37,25 +30,44 @@ var handleInput = function(socket, player, input) {
       World.enterRoom(player, player.currentRoom, socket)
       break
 
-    case "back to the game":
-      player.inMenu = false
-      player.save()
-      if(player.state == "world" || player.state == "bot" || player.state == "chat") {
-        player.state = "world"
-        player.save()
-        World.handleInput(socket, player, "")
-      } else {
-        restart(socket, player)
+    case "rename":
+      if(player.state == "chat") {
+        var message = "Bye for now, I'm renaming myself..."
+        Util.write(socket, player, player, message, "sender") 
+        Chat.leaveChat(socket, player, message)
       }
-      break 
-
+      player.inMenu = false
+      player.state = "welcome"
+      player.save()
+      Intro.handleInput(socket, player, "")
+      break
+      
     case "help": 
+      if(player.state == "chat") {
+        var message = "Bye for now, I'm reading the manual..."
+        Util.write(socket, player, player, message, "sender") 
+        Chat.leaveChat(socket, player, "Bye for now, I'm reading the manual...")
+      }
+      
       Util.write(socket, player, {name: "System"}, "How to play", "sender", "chapter")
       text = "Welcome to Adventure Nodes. Be curious! You'll figure things out. [back to the game]"
       player.inMenu = true
       player.save()
       Util.write(socket, player, {name: "System"}, Util.linkify(text), "sender")      
       break
+        
+    case "back to the game":
+      player.inMenu = false
+      player.save()
+      if(player.state == "world" || player.state == "bot" || player.state == "chat") {
+        player.state = "world"
+        player.save()
+        Util.write(socket, player, {name: "System"}, "", "sender", "chapter", player) // send empty message to get back to game
+      } else {
+        restart(socket, player)
+      }
+      break 
+        
 
     default:
       return false

@@ -5,7 +5,7 @@ var drive_controller = require('drive_controller')
 
 // look up existing nodes and send to client
 var updateNodeList = function(socket) {
-  adventureNode.find({}, function(err, adventure_nodes) {
+  adventureNode.find({}).sort({title: 1}).exec(function(err, adventure_nodes) {
     socket.emit('update-node-list', adventure_nodes) 
   })
   

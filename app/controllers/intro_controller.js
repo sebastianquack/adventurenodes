@@ -2,6 +2,7 @@
 
 var Util = require('./util.js')
 var World = require('./world_controller.js')
+var Chat = require('./chat_controller.js')
 var mongoose = require('mongoose')
 var Player = mongoose.model('Player')
 
@@ -25,14 +26,22 @@ var handleInput = function(socket, player, input) {
     input = Util.lowerTrim(input)
     Util.write(socket, player, {name: "Computer"}, "Ok. Have fun, " + Util.capitaliseFirstLetter(input) + "!", "socket")
     
-    // create player
+    // save player data
+    var oldName = player.name.capitalize()
     player.name = input
     player.state = "world"
-    player.active = true
     player.save()
-
-    // hand off to world controller
-    World.handleInput(socket, player, null)
+    
+    if(player.active) {
+      Util.write(socket, player, {name: "System"}, "Your name is now " + player.name.capitalize() + ".", "sender", null, player)
+      Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, oldName + " changed their name to " + player.name.capitalize() + ".", "everyone else")
+    } else {
+      player.active = true    
+      player.save()
+      // hand off to world controller
+      World.handleInput(socket, player, null)
+    }
+    
     break
   }
 }

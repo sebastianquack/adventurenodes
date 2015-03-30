@@ -34,7 +34,7 @@ var getCommand = function(input) {
   }
 }
 
-var ignoreList = ['the', 'to', 'at', 'in', 'into', 'against']
+var ignoreList = ['the', 'to', 'at', 'in', 'into', 'against', 'a']
 
 // returns string without first word
 var getObject = function(input) {
@@ -46,7 +46,7 @@ var getObject = function(input) {
     return words[1]  
   }
   if(words.length >= 3) {
-    if (['the', 'to', 'at', 'in', 'into'].indexOf(words[1]) >= 0) {
+    if (ignoreList.indexOf(words[1]) >= 0) {
       if(words.length == 3) {
         return words[2] // eat the cake -> use cake
       }
@@ -67,8 +67,8 @@ var linkify = function(text) {
     
   text = text.replace(/\/(.*?)\//g,'<span class="italic">$1</span>') // italic      
   text = text.replace(/\*(.*?)\*/g,'<span class="bold">$1</span>') // bold
-  text = text.replace(/\[(.*?)\|(.*?)\]/g,'<b data-command="$2">$1</b>') // parse old links
-  text = text.replace(/\[(.*?)\]/g,'<b data-command="$1"></b>') // parse new links
+  text = text.replace(/\<(.*?)\>/g,'<b data-command="$1"></b>') // parse new links
+  text = text.replace(/\[(.*?)\]/g,'<b data-command="$1"></b>') // parse old links
     
 	return text
 }
@@ -91,13 +91,13 @@ var playerGetSockets = function(player, callback) {
 
 // send text to client
 // player: playing belonging to the socket, both causing the message
-// emitter: player object of the sender ( usually the player again, or {name: "System"})
+// emitter: player object of the sender (usually the player again, or {name: "System"})
 // value: the message
 // mode: the recipients group
 // type: info about the message type for the front end
 //
 // IDEE / REFACTOR : instead of taking metadata from player (which does not work for group messages to socket.io rooms)
-// , pass only the relevant ones in the arguments if required
+// pass only the relevant ones in the arguments if required
 //
 var write = function(socket, player, emitter, value, mode, type, recipient) {
 

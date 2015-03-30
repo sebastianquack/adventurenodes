@@ -11,12 +11,12 @@ var Chat = require('./chat_controller.js')
 var Intro = require('./intro_controller.js')
 
 var startingNodes = ['example1']
-var RegexPrivateRooms = "(tretroller|stahlgleiter|mini\-van|kart)$"
 var Spreadsheets = require('drive_controller')
 
-var RegexWoBinIch = /^(wo bin ich|wobinich|wo|umschauen|schaue um|schaue dich um|schau um|schau dich um|schaue$)/i
-var RegexWerBinIch = /^(wer bin ich|werbinich|ich$|schau dich an)/i
-var RegexWerIstDa = /^(wer ist da|werbistda|wer$|wer ist anwesend)/i
+var RegexWoBinIch = /^(look|look around)/i
+var RegexWerBinIch = /^(who am I)/i
+var RegexWerIstDa = /^(who is there)/i
+
 var worldVariables = []
 
 /* function declarations */
@@ -36,58 +36,81 @@ function getPlayersInRoom(socket, room, callback) {
   } 
 
   for (i in roomSockets) {
-    //if (uuids.indexOf(roomSockets[i]) == -1) 
     roomSockets[i].get("uuid", function(err, uuid) {
       if (uuid == undefined) return
       else uuids.push(uuid)
-      if (i >= roomSockets.length-1) queryPlayers(uuids)
+      if (i >= roomSockets.length - 1) queryPlayers(uuids)
     })
   }
 }
 
+// announces players to each other, is called when player enters a subnode or looks around
 function announceRoomPlayers(socket, player, announceArrival) {
-    if (player.currentRoom.search(RegexPrivateRooms) != -1) return // no output in private rooms
     getPlayersInRoom(socket, player.currentRoom, function(roomPlayers) {
-      playerNames = []
+      var playerNames = []
       for (i in roomPlayers) { 
-        if (player.name != roomPlayers[i].name) {
+        if (player.uuid != roomPlayers[i].uuid) {
           playerNames.push(roomPlayers[i].name) 
           if (announceArrival) {
-            Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name + Util.linkify(" ist jetzt auch hier. [sprich " + player.name + "]"), "sender", null, roomPlayers[i])
+            Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name.capitalize() + Util.linkify(" just arrived! <say something> or <start a conversation>"), "sender", null, roomPlayers[i])
           }
         }
-      }    
+      }
       switch(playerNames.length) {
         case 0:  return;
-        case 1:  var list= playerNames[0] + " ist"; break;
-        case 2:  var list= playerNames[0] + " und " + playerNames[1] + " sind"; break;
-        default: var list= playerNames.splice(0,-1).join(", ") + " und " + playerNames[playerNames.length-1] + " sind"
+        case 1:  var list= playerNames[0].capitalize() + " is"; break;
+        case 2:  var list= playerNames[0].capitalize() + " and " + playerNames[1].capitalize() + " are"; break;
+        default: var list= playerNames.splice(0,-1).map(Util.capitaliseFirstLetter).join(", ") + " and " + playerNames[playerNames.length-1].capitalize() + " are"
       }
-      Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, Util.linkify("[" + list + " auch hier.|sage Hallo]"), "sender")
+      Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, Util.linkify(list + " here. <say something> or <start a conversation>"), "sender")
     })
 }
 
 // parse WorldVariable String
 function parseWV(string) {
-  parts = string.split("=")
-  // TODO error handling
-  return { name: parts[0], value: parts[1] }
+  parts = string.split(" ")
+  if(parts.length == 1) {
+    return { name: parts[0].trim(), value: 'true', operator: "=" }    
+  }
+  if(parts.length == 2) {
+    if(parts[0].trim() == "not") {
+      return { name: parts[1].trim(), value: 'true', operator: "!=" }    
+    } else 
+      return { name: parts[0].trim(), value: parts[1].trim(), operator: "=" }    
+  } 
+  if (parts.length == 3) {
+    if(parts[1].trim() == "not") {
+      return { name: parts[0].trim(), value: parts[2].trim(), operator: "!=" }    
+    }
+  }
+  return null
 }
 
 // check WorldVariable
-function checkWV(wv) {
-  if (wv == undefined) return true // no object given
-  if (worldVariables[wv.name] == undefined) { // wv does not exist
-    console.log("init WV " + wv.name + "=" + wv.value)
-    setWV(wv) // init at first appearance
-    return true
+function checkCondition(condition) {
+  if (condition == undefined) return true // no object given
+  if (worldVariables[condition.name] == undefined) { // wv hase not been set
+    if(condition.operator == "=") return false
+    if(condition.operator == "!=") return true
   }
-  else return (worldVariables[wv.name] == wv.value)
+  if(condition.operator == "=") {
+    return (worldVariables[condition.name] == condition.value)
+  }
+  if(condition.operator == "!=") {
+    return !(worldVariables[condition.name] == condition.value)
+  }
 }
 
 // set WorldVariable
-function setWV(vw) {
-  worldVariables[vw.name] = vw.value
+function setWV(wv) {
+  if(wv.operator == "=") {
+    worldVariables[wv.name] = wv.value
+    console.log("set WV " + wv.name + "=" + wv.value)
+  }
+  if(wv.operator == "!=") {
+    worldVariables[wv.name] = undefined
+    console.log("unset WV " + wv.name)
+  }
 }
 
 // prepare player for movement
@@ -119,8 +142,7 @@ function setRoom(player, room, socket) {
 function enterRoom(player, room, socket) {
   setRoom(player, room, socket)
   player.currentRoomData = {}
-  player.save()
-  //if (reply == "") chat(socket, {name: "System"}, "Du verlässt den Raum...", "sender") // todo get response from db        
+  player.save()    
   handleInput(socket, player, null)
 }
 
@@ -130,38 +152,79 @@ function enterChat(socket, player, chatRoom, message) {
   socket.join(chatRoom)
   player.state = "chat"
   player.save()
-  Chat.handleInput(socket, player, message)
+  Chat.handleInput(socket, player, message, "start conversation")
 }
 
 // parse and execute room commands
-function processRoomCommand(socket, player, command, object) {
+function processRoomCommand(socket, player, input, marker) {
   data = player.currentRoomData
   roomCommandFound = false
   if (data == undefined) return false
   var reply = ""
-  //var bot = ""
   var exit = ""
   var effects = []
+  var markerReached = false
+    
   for (i in data.command) {
+    if(marker) { // if a marker is specified
+      if(data.marker[i]) { // we're on a line with a marker
+        if(!markerReached && data.marker[i] != marker) {
+          continue // it's not our marker, move on
+        }
+        if(data.marker[i] == marker) {
+          markerReached = true // we've reached our marker
+        }
+        if(markerReached && data.marker[i] != marker) {
+          break // we've reached the next marker
+        }
+      } else {
+        if(!markerReached) { // we're not on a line without a marker and haven't found our marker
+          continue
+        }
+      }
+    }
+      
     if (i >= data.command.length) { // prevent a strange bug having to do with cached data object being too large
       console.log("error prevented: player.currentRoomData too large!")
       continue
     }
+    
     if (data.command[i] != undefined) data.command[i] = data.command[i].toLowerCase().trim()
     if (data.object[i] != undefined)  data.object[i] = data.object[i].toLowerCase().trim()
 
+    // check if command and object matches
+    var commands = data.command[i].split(",")
+    var objects = data.object[i].split(",")  
+    var matchCommand = false
+    var matchObject = false
+    
+    if(input) {
+      
+      commands.some(function(command) {
+        if(command)
+          if(input.indexOf(command.trim()) != -1) {
+            matchCommand = true
+            return true
+          }
+      })
+    
+      objects.some(function(object) {
+          if(input.indexOf(object.trim()) != -1) {
+            matchObject = true
+            return true
+          }
+      })
+    
+    }
+    
+    // check conditions
     var condition = null
-
-    // get world variable (condition)
     if (data.condition != undefined && data.condition[i].length > 0) {
       var condition = parseWV(data.condition[i])
     }
-
-    if (
-      data.command[i].split("|").indexOf(command) != -1
-      && data.object[i].split("|").indexOf(object) != -1
-      && (condition == null || checkWV(condition)) // check condition
-    ) { // TODO: SYNONYMS
+    
+    // if there's no input and no command or if the input matches command+object && variable conditions are met
+    if( ((!input && commands[0] == '') || (matchCommand && matchObject)) && (condition == null || checkCondition(condition)) ) {
       
       roomCommandFound = true
 
@@ -172,11 +235,11 @@ function processRoomCommand(socket, player, command, object) {
       }   
 
       // collect reply
-      reply = reply + Util.linkify(data.text[i]) + " "
+      reply = reply + Util.linkify(data.response[i]) + " "
 
       // announce action publicly
       if (data.announcement != undefined && data.announcement[i].length > 0) {
-        Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name + " " + Util.linkify(data.announcement[i]), "everyone else") // todo only to people in room
+        Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name.capitalize() + " " + Util.linkify(data.announcement[i]) + ".", "everyone else") // todo only to people in room
       } 
 
       // collect exit
@@ -217,13 +280,12 @@ function roomEntered(socket, player, data) {
   
   // save room data in player
   setRoom(player, player.currentRoom, socket)
-  Util.write(socket, player, {name: "System"}, player.currentRoom.replace("/",", ") + " — \time", "sender", "chapter")
-  //if (player.currentRoom.search(RegexPrivateRooms) == -1) Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name + Util.linkify(" ist jetzt auch hier. [sprich " + player.name + "]"), "everyone else")
+  
   player.currentRoomData = data;
   player.inMenu = false
   player.save()
   
-  processRoomCommand(socket, player, "base", "") // display base description of room on entry
+  processRoomCommand(socket, player, null, null) // display base description of room on entry
   announceRoomPlayers(socket, player, true) // announce player entry to other players
 }     
 
@@ -244,18 +306,13 @@ var handleInput = function(socket, player, input) {
       setRoom(player, requestedNode, socket)
     }
     
-    console.log("looking for Node " + requestedNode)
-    
     // search node database by title
     AdventureNode.findOne({ title: requestedNode }, function(err, node) {
       if(err) return Util.handleError(err)
       
       // found the node
       if(node) {
-        console.log("Moving player to node:")
-        console.log(node)
-
-        // save the node
+        // save the node in playerx
         player.currentNode = node
         
         // determine and save the name of the node / city to history
@@ -279,93 +336,60 @@ var handleInput = function(socket, player, input) {
     return
   }
 
-  // player entered a command
-  var command = Util.getCommand(input)
-  var object = Util.getObject(input)
-
-  // check if player entered a command speficied in spreadsheet
-  if (command != "base") {
-    roomCommandFound = processRoomCommand(socket, player, command, object)
+  // check if player input matches to input from spreadsheet
+  if (input != null) {
+    roomCommandFound = processRoomCommand(socket, player, input, null)
   }
 
-  // the command palyer entered was not specified, try to interpret it as general system command
+  // the command player entered was not specified, try to interpret it as general system command
   if (!roomCommandFound) {
 
-    // wo bin ich?
+    // look around?
     if (input.search(RegexWoBinIch) != -1) {
-      processRoomCommand(socket, player, "base", "")
-      announceRoomPlayers(socket, player)
+      processRoomCommand(socket, player, null, null)
+      announceRoomPlayers(socket, player, null)
       return
     }
 
-    // wer bin ich?
+    // who am I?
     if (input.search(RegexWerBinIch) != -1) {
       Util.write(socket, player, {name: "System"}, player.name, "sender")
       return
     }
 
-    // wer ist da?
+    // who else is here?
     if (input.search(RegexWerIstDa) != -1) {
-      announceRoomPlayers(socket, player)
+      announceRoomPlayers(socket, player, null)
       return
     }
 
+    var command = Util.getCommand(input)
+    var object = Util.getObject(input)
+
     switch(command) {
-      case "sage" :
-      case "sprich" :
+
+      case "say" :
+        var msg = input.substring(4)
+        Chat.handleInput(socket, player, msg, "say")
+        break
+
+      case "start" :
+        if(object != "conversation") break
         if(player.inMenu) {
           player.inMenu = false
         }
         player.state = "chat"
         player.save()
-        Util.write(socket, player, {name: "System"}, "Du beginnst zu sprechen. Verabschiede dich, um das Gespräch zu beenden.", "sender")
-        if (object) {
-          playerOrMessage = Util.getCommand(object)
-          var targetPlayer = undefined
-          var message = Util.getObject(object)
-          getPlayersInRoom(socket, player.currentRoom, function(roomPlayers) {
-            for (i in roomPlayers) { 
-              if (roomPlayers[i].name == playerOrMessage) {
-                targetPlayer = roomPlayers[i]
-              }
-            }
-            // target player found
-            if (targetPlayer != undefined) {
-              if (message) {
-                // enter chat with targetPlayer & message
-                //Util.write(socket, targetPlayer, {name: "System"}, player.name + " spricht so zu dir, dass nur du es hören kannst...", "sender")
-                //Util.write(socket, player, {name: "System"}, "Du wendest dich " + targetPlayer.name + " zu.", "sender")
-                //Util.write(socket, player, player, message, "everyone else", null, targetPlayer )
-                enterChat(socket, player, player.currentRoom, object) 
-              }
-              else {
-                // enter chat with targetPlayer
-                enterChat(socket, player, player.currentRoom, object) 
-              }
-            }
-            // no target player found
-            else {
-              // enter chat with room and message
-              enterChat(socket, player, player.currentRoom, object) 
-            }
-          })
-        }
-        else {
-          enterChat(socket, player, player.currentRoom) 
-        }
+        Util.write(socket, player, {name: "System"}, "You start a conversation! Say goodbye to leave.", "sender")
+        Util.write(socket, player, {name: "System"}, player.name.capitalize() + " starts a conversation! Say goodbye to leave.", "everyone else")
+        enterChat(socket, player, player.currentRoom, "Hi, everyone!") 
         break
+      
       case "warp":
         var target = object
         enterRoom(player, target, socket)
         break
 
-      case "admin":
-          switch(object) {
-            case "print player":
-              Util.write(socket, player, {name: "System"}, player, "sender")
-            break
-          }
-        break
       default:
         if (!object) var apologies = "You try to " + command + ", but it doesn't work."
         else var apologies = "You try to " + command + " the " + object + ", but it doesn't work."
