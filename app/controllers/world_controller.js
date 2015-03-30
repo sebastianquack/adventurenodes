@@ -382,7 +382,7 @@ var handleInput = function(socket, player, input) {
         player.save()
         Util.write(socket, player, {name: "System"}, "You start a conversation! Say goodbye to leave.", "sender")
         Util.write(socket, player, {name: "System"}, player.name.capitalize() + " starts a conversation! Say goodbye to leave.", "everyone else")
-        enterChat(socket, player, player.currentRoom, "Hi, everyone!") 
+        enterChat(socket, player, player.currentRoom, "Let's talk!") 
         break
       
       case "warp":

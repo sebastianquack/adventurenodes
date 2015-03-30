@@ -119,6 +119,7 @@ $(document).ready(function() {
   if(path.length > 2) {
     if(path[path.length - 2] == 'play') {
       target_node = path[path.length - 1]
+      $('#node-title').html(target_node)
     }
   }
   
@@ -206,6 +207,7 @@ $(document).ready(function() {
         console.log("pushState: " + newPath)
         history.pushState(null, null, newPath)
         everPushedSomething = true
+        $('#node-title').html(player.currentRoom.split("/")[0])
       }
     }
     

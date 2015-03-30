@@ -49,23 +49,23 @@ var handleInput = function(socket, player, input) {
         Chat.leaveChat(socket, player, "Bye for now, I'm reading the manual...")
       }
       
-      Util.write(socket, player, {name: "System"}, "How to play", "sender", "chapter")
-      text = "Welcome to Adventure Nodes. Be curious! You'll figure things out. [back to the game]"
-      player.inMenu = true
-      player.save()
+      //Util.write(socket, player, {name: "System"}, "", "sender", "chapter")
+      text = "Welcome to Adventure Nodes. Be curious! Click on the yellow boxes or type things using your keyboard. Make sure you also click on the menu button at the top right. You'll figure things out. You can always try to <look around>"
+      /*player.inMenu = true
+      player.save()*/
       Util.write(socket, player, {name: "System"}, Util.linkify(text), "sender")      
-      break
+      /*break
         
     case "back to the game":
       player.inMenu = false
       player.save()
-      if(player.state == "world" || player.state == "bot" || player.state == "chat") {
-        player.state = "world"
-        player.save()
-        Util.write(socket, player, {name: "System"}, "", "sender", "chapter", player) // send empty message to get back to game
-      } else {
-        restart(socket, player)
-      }
+      if(player.state == "world" || player.state == "bot" || player.state == "chat") {*/
+      player.state = "world"
+      player.save()
+      //Util.write(socket, player, {name: "System"}, "", "sender", "chapter", player) // send empty message to get back to game
+      //} else {
+      //  restart(socket, player)
+        //}
       break 
         
 

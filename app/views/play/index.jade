@@ -3,8 +3,8 @@ extends ./play_layout.jade
 block content  
 
   header#top
-    h1    
-      span.sr-only adventure nodes
+    h1 adventure nodes: 
+      span(id='node-title')
     nav(role='navigation')
       button(type='button', data-menu='help', class='help-btn')
         span.sr-only Hilfe zum Spiel
@@ -18,7 +18,7 @@ block content
         li
           b(data-menu='rename') Choose a different name
         li
-          b(data-menu='restart node') Restart this node
+          b(data-menu='restart') Restart this node
         li
           b(id='manage-link') Node management area
         li

@@ -54,29 +54,22 @@ header {
   top: 0;
   left: 0;
   right: 0;
-  margin: 6px 6px 0 6px;
   background: #555555;
   z-index: 1;
 }
 header h1 {
-  /*background: #222222 url("../images/c54_header.jpg") no-repeat;*/
-	display: none;
-  height: 70px;
-  padding: 0;
-  margin: 0 35px 0 0;
-  cursor: pointer;
-}
-header h2 {
-  font-size: .8em;
-  padding: 0.3em 14px;
+	height: 23px;
+  font-size: 1em;
+	font-style: italic;
+  padding: 14px 20px 6px 20px;
   margin: 0;
   text-transform: uppercase;
-  background: #060606;
+  background: #111;
 }
 header button {
   position: absolute;
-  right: 0;
-  top: 0;
+  right: 1px;
+  top: 7px;
   width: 35px;
   height: 35px;
   cursor: pointer;
@@ -86,12 +79,12 @@ header button {
 }
 header button.help-btn {
    background: #222222 url("../images/help_button.png") no-repeat;
+	 right: 36px;
 }
 header button.fullscreen-toggle {
 	background: #222222 url("../images/fullscreen_button.png") no-repeat;
 }
 header button.navbar-toggle {
-  top: 35px;
   background: #222222 url("../images/nav_button.png") no-repeat;
 }
 header button:hover {
@@ -140,13 +133,13 @@ header .show ul {
 #chat {
   overflow-y: scroll;
   overflow-wrap: break-word;
-  height: 100%;
+  height: 97%;
   line-height: 1.3em;
   box-sizing: border-box;
   -moz-box-sizing: border-box;
   margin: 0;
   padding: 20px;
-  /*padding-top: 110px;*/
+  padding-top: 50px;
   margin-right:6px;
   position: absolute;
   top: 0;
