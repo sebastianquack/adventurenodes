@@ -41,10 +41,25 @@ $(document).ready(function() {
     $('#notice').fadeOut()
   })
 
+  $('#sheet-id').click(function() {
+    if($('#sheet-id').val() == 'google spreadsheet id') {
+      $('#sheet-id').val('')
+    } 
+  })
+
   // submit a new title to create a node
   $('#create-node').click(function() {
+    if($('#node-title').val() != 'title') {
+      var title = $('#node-title').val()
+    }
+    if($('#sheet-id').val() != 'google spreadsheet id') {
+      var sheet_id = $('#sheet-id').val()
+    }
+    
     if($('#node-title').val() != '' && $('#node-title').val() != 'title') {
-      window.location = "/manage/create?title=" + $('#node-title').val() + "&id=" + $('#node-base').find(':selected').data('id')      
+      window.location = "/manage/create?title=" + title 
+      + "&example_id=" + $('#node-base').find(':selected').data('id')
+      + "&sheet_id=" + sheet_id
     }    
   })
 

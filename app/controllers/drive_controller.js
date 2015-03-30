@@ -52,7 +52,8 @@ var authorize_create = function(req, res) {
     if(err) return handleError(err)      
     if(!node) {
       req.session.driveAction = "create"
-      req.session.nodeBaseId = req.query.id
+      req.session.nodeBaseId = req.query.example_id
+      req.session.nodeSheetId = req.query.sheet_id
       req.session.nodeTitle = title // save title in session for after auth
       res.redirect(url) // request authorization from google
     } else {
@@ -97,17 +98,43 @@ var getAccessToken = function(code, callback) {
 // create new spreadsheet 
 var new_spreadsheet = function(req, res) {
   getAccessToken(req.query.code, function() {
-    upload(req.session.nodeBaseId, req.session.nodeTitle, function() { // retrieve title
+    upload(req.session.nodeBaseId, req.session.nodeSheetId, req.session.nodeTitle, function() { // retrieve title
       res.redirect('/')      
     })
   })
 }
 
 // creates a new spreadsheet on user's account, shares with service account
-var upload = function(id, title, callback) {
-    
-  // create a new empty spreadsheet in users drive
-  if(typeof id == 'undefined' || id == 'undefined' || !id) {
+var upload = function(baseId, sheetId, title, callback) {
+  // if sheetId is defined take an existing sheet
+  if(sheetId != 'undefined') {
+    console.log(sheetId)
+    var data = {
+      id: sheetId,
+      alternateLink: 'https://docs.google.com/spreadsheets/d/' + sheetId + '/edit#gid=0',
+      title: title
+    }
+    console.log(data)
+    createNodeAndSetupPermissions(data, callback)       
+
+  } else
+  // if fileId is specified, copy spreadsheet to user drive
+  if(baseId != 'undefined') {
+    drive.files.copy({
+       fileId: baseId,
+       resource: { 
+         title: title,
+         parents: [{id: "root"}]
+        }
+      }, function(err, data) {
+        if(err) { 
+          console.log(err) // copy works but this throws 404 file not found error - why??
+          callback()
+          return
+        }
+      createNodeAndSetupPermissions(data, callback)       
+      })
+  } else { // create a new empty spreadsheet in users
     drive.files.insert({
       resource: {
         title: title,
@@ -119,23 +146,7 @@ var upload = function(id, title, callback) {
         baseSetupSpreadsheet(data.id, callback) // setup table header
       })                         
     })        
-  // if fileId is specified, copy spreadsheet to user drive
-  } else {
-    drive.files.copy({
-      fileId: id,
-      resource: { 
-        title: title,
-        parents: [{id: "root"}]
-       }
-    }, function(err, data) {
-      if(err) { 
-        console.log(err) // copy works but this throws 404 file not found error - why??
-        callback()
-        return
-      }
-      createNodeAndSetupPermissions(data, callback)       
-    })
-  }
+  } 
 }
 
 var createNodeAndSetupPermissions = function(data, callback) {
@@ -147,6 +158,7 @@ var createNodeAndSetupPermissions = function(data, callback) {
     title: data.title
   }) 
   new_adventure_node.save()
+  console.log(new_adventure_node)
   
   // add permission to service account for accessing the spreadsheet
   drive.permissions.insert({
