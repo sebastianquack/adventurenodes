@@ -15,6 +15,7 @@ var PlayerSchema = new Schema({
   active: { type: Boolean, default: false },
   inMenu: { type: Boolean, default: false },
   passphrase: { type: String, default: null },
+  currentMarker: { type: String, default: '' },
   currentRoom: { type: String, default: '' },
   previousRoom: { type: String, default: '' },
   currentRoomData: { type: Object, default: {}},  

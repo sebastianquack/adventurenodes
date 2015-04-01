@@ -35,11 +35,16 @@ function submitCommand() {
   val = $('#input-command').val()
   if (val.trim()=="") return
   
-  if(val.trim() == "logout") {
-    $.cookie('an_uuid', uuid.v1(), { expires: 31 }) // create new uuid
-    location.reload()
-  } else {
-    socket.emit('player-action', { uuid: $.cookie('an_uuid'), input: val })
+  switch(val.trim()) {
+    case "clear":    
+      $('#chat section p.incoming').remove() // todo: move everything into archive + animate!      
+      break
+    case "logout":
+      $.cookie('an_uuid', uuid.v1(), { expires: 31 }) // create new uuid
+      location.reload()
+      break
+    default:
+      socket.emit('player-action', { uuid: $.cookie('an_uuid'), input: val })
   }
   $('#input-command').val('')
   updateInput()
@@ -151,10 +156,16 @@ $(document).ready(function() {
       state:        (data.player_state != null) ? data.player_state : player.state,
     }
 
-    // do some replacements
+    // interpret special format commands
     var d = new Date()
     var dateString = d.getDate()+"."+(d.getMonth()+1)+"."+d.getFullYear()+", "+d.getHours()+":"+("00" + d.getMinutes()).slice(-2)
-    data.value = data.value.replace("\time", dateString) // parse old links
+    data.value = data.value.replace("\\time", dateString)
+    
+    if(data.value.indexOf("\clear") != -1) {
+      data.value = data.value.replace("\\clear", "")
+      console.log("clear")
+      $('#chat section p.incoming').remove() // todo: move everything into archive + animate!
+    }
     
     // add text
     if(data.sender_name == "System") {

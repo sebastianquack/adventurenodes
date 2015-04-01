@@ -21,7 +21,7 @@ var worldVariables = []
 
 /* function declarations */
 
-// get a list of active player in a room
+// get a list of active players in a room
 function getPlayersInRoom(socket, room, callback) {
 
   uuids = []
@@ -46,13 +46,15 @@ function getPlayersInRoom(socket, room, callback) {
 
 // announces players to each other, is called when player enters a subnode or looks around
 function announceRoomPlayers(socket, player, announceArrival) {
+    console.log("announcing player")
     getPlayersInRoom(socket, player.currentRoom, function(roomPlayers) {
       var playerNames = []
       for (i in roomPlayers) { 
+        console.log(roomPlayers[i].name)
         if (player.uuid != roomPlayers[i].uuid) {
           playerNames.push(roomPlayers[i].name) 
           if (announceArrival) {
-            Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name.capitalize() + Util.linkify(" just arrived! <say something> or <start a conversation>"), "sender", null, roomPlayers[i])
+            Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name.capitalize() + Util.linkify(" just arrived! <say something> <start a conversation>"), "sender", null, roomPlayers[i])
           }
         }
       }
@@ -62,7 +64,7 @@ function announceRoomPlayers(socket, player, announceArrival) {
         case 2:  var list= playerNames[0].capitalize() + " and " + playerNames[1].capitalize() + " are"; break;
         default: var list= playerNames.splice(0,-1).map(Util.capitaliseFirstLetter).join(", ") + " and " + playerNames[playerNames.length-1].capitalize() + " are"
       }
-      Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, Util.linkify(list + " here. <say something> or <start a conversation>"), "sender")
+      Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, Util.linkify(list + " here. <say something> <start a conversation>"), "sender")
     })
 }
 
@@ -160,30 +162,37 @@ function processRoomCommand(socket, player, input, marker) {
   data = player.currentRoomData
   roomCommandFound = false
   if (data == undefined) return false
-  var reply = ""
-  var exit = ""
+  var response = ""
+  var jump = ""
   var effects = []
-  var markerReached = false
+  var markers = []
+  var markerReached = false    
     
   for (i in data.command) {
-    if(marker) { // if a marker is specified
-      if(data.marker[i]) { // we're on a line with a marker
-        if(!markerReached && data.marker[i] != marker) {
-          continue // it's not our marker, move on
+    //console.log(i + ": " + data.marker[i] + " " + data.command[i] + " " + data.object[i]) 
+
+    if(data.marker[i]) { // we're on a line with a marker
+      markers.push(data.marker[i])
+      if(!markerReached && data.marker[i] != marker && marker) {
+        continue // it's not our marker, move on
+      }
+      if(data.marker[i] == marker || !marker) {
+        markerReached = true // we've reached our marker
+        if(!marker) {
+          marker = data.marker[i]
         }
-        if(data.marker[i] == marker) {
-          markerReached = true // we've reached our marker
-        }
-        if(markerReached && data.marker[i] != marker) {
-          break // we've reached the next marker
-        }
-      } else {
-        if(!markerReached) { // we're not on a line without a marker and haven't found our marker
-          continue
-        }
+        player.currentMarker = marker // save marker for later
+        player.save()
+      }
+      if(markerReached && data.marker[i] != marker) {
+        break // we've reached the next marker
+      }
+    } else {
+      if(!markerReached && marker) { // we haven't found our marker and we're really looking for one
+        continue
       }
     }
-      
+
     if (i >= data.command.length) { // prevent a strange bug having to do with cached data object being too large
       console.log("error prevented: player.currentRoomData too large!")
       continue
@@ -234,32 +243,40 @@ function processRoomCommand(socket, player, input, marker) {
         effects.push(effect)
       }   
 
-      // collect reply
-      reply = reply + Util.linkify(data.response[i]) + " "
+      // collect response
+      response = response + Util.linkify(data.response[i]) + " "
 
       // announce action publicly
       if (data.announcement != undefined && data.announcement[i].length > 0) {
         Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name.capitalize() + " " + Util.linkify(data.announcement[i]) + ".", "everyone else") // todo only to people in room
       } 
 
-      // collect exit
-      if (data.exit != undefined && data.exit[i].length > 0) {
-        exit = data.exit[i]
+      // collect jumps
+      if (data.jump != undefined && data.jump[i].length > 0) {
+        jump = data.jump[i]
       }  
 
     }
   }
-  // send reply
-  if (reply != "") {
-    Util.write(socket, player, {name: "System"}, reply, "sender")
+  // send response
+  if (response != "") {
+    Util.write(socket, player, {name: "System"}, response, "sender")
   }
 
   // set variable effects
   effects.forEach(function(effect) { setWV(effect) })
 
-  // leave room
-  if (exit != "") {
-    enterRoom(player, exit, socket)
+  // do jump
+  if (jump != "") {
+    if(markers.indexOf(jump) != -1) { // check if jump is to a marker
+      processRoomCommand(socket, player, "", jump)
+    } else 
+    if(player.currentNode.subnodes.indexOf(jump) != -1) { // check if jump is to a subnode
+      enterRoom(player, player.currentNode.title + "/" + jump, socket)
+    }
+    else { // jump to a whole different node
+      enterRoom(player, jump, socket)
+    }
   }  
 
   return roomCommandFound
@@ -295,11 +312,11 @@ var handleInput = function(socket, player, input) {
   input = Util.lowerTrim(input)
 
   // there is no player input: the player just entered the room
-  if(!input) { 
+  if(!input) {
     
     // determine the name of the node the player wants to enter
     var requestedNode = player.currentRoom.split("/")[0] 
-
+    
     // if player doesn't know where to be - assign to random node
     if(!requestedNode || player.currentRoom == undefined) {
       requestedNode = startingNodes[Math.floor(Math.random() * startingNodes.length)]
@@ -314,6 +331,9 @@ var handleInput = function(socket, player, input) {
       if(node) {
         // save the node in playerx
         player.currentNode = node
+        
+        // reset marker
+        player.currentMarker = null 
         
         // determine and save the name of the node / city to history
         if(player.cities.indexOf(node.title) == -1) {
@@ -338,7 +358,7 @@ var handleInput = function(socket, player, input) {
 
   // check if player input matches to input from spreadsheet
   if (input != null) {
-    roomCommandFound = processRoomCommand(socket, player, input, null)
+    roomCommandFound = processRoomCommand(socket, player, input, player.currentMarker)
   }
 
   // the command player entered was not specified, try to interpret it as general system command
@@ -346,7 +366,7 @@ var handleInput = function(socket, player, input) {
 
     // look around?
     if (input.search(RegexWoBinIch) != -1) {
-      processRoomCommand(socket, player, null, null)
+      processRoomCommand(socket, player, null, player.currentMarker)
       announceRoomPlayers(socket, player, null)
       return
     }

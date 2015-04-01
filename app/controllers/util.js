@@ -67,8 +67,8 @@ var linkify = function(text) {
     
   text = text.replace(/\/(.*?)\//g,'<span class="italic">$1</span>') // italic      
   text = text.replace(/\*(.*?)\*/g,'<span class="bold">$1</span>') // bold
-  text = text.replace(/\<(.*?)\>/g,'<b data-command="$1"></b>') // parse new links
-  text = text.replace(/\[(.*?)\]/g,'<b data-command="$1"></b>') // parse old links
+  text = text.replace(/\<(.*?)\>/g,'<b data-command="$1"></b>') // parse links
+  //text = text.replace(/\[(.*?)\]/g,'<b data-command="$1"></b>') // parse old links
     
 	return text
 }

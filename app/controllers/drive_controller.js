@@ -350,6 +350,16 @@ var loadRoom = function(socket, player, room, node, callback) {
     	return
     }
     
+    // save worksheet names as array of subnodes in node object
+    var subnodes = []
+    if(spreadsheet.raw.worksheets)
+      spreadsheet.raw.worksheets.forEach(function(worksheet) {
+         subnodes.push (worksheet.title)
+      })
+    console.log(subnodes)
+    node.subnodes = subnodes
+    node.save()
+    
   	// populate cache
   	if (typeof spreadsheetIdCache[spreadsheetName] == "undefined") {
   		spreadsheetIdCache[spreadsheetId] = {} 
@@ -368,7 +378,8 @@ var loadRoom = function(socket, player, room, node, callback) {
     	keys = rows[1]
     	data = new Object
     	for (k in keys) {
-    		data[keys[k]] = []
+        keys[k] = keys[k].trim().replace(/(\r\n|\n|\r)/gm,"") // get rid of common typos
+        data[keys[k]] = []
     	}
     	for (i in rows) {
     		if (i > 1) {

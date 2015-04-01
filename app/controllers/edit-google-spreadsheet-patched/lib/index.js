@@ -161,7 +161,7 @@ Spreadsheet.prototype.getSheetId = function(type, callback) {
           e2[prop] = val;
       }
             
-      if(_this.opts.useDefaultWorksheet && type == "work") {
+      if(_this.opts.useDefaultWorksheet && type == "work") { // patch
         if(!_this[id] && e2.id && /([^\/]+)$/.test(e2.id)) {
           _this[id] = RegExp.$1; // store first worksheet id
           _this.worksheetName = e2.title // and title
