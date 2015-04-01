@@ -166,7 +166,7 @@ function processRoomCommand(socket, player, input, marker) {
   var jump = ""
   var effects = []
   var markers = []
-  var markerReached = false    
+  var markerReached = false
     
   for (i in data.command) {
     //console.log(i + ": " + data.marker[i] + " " + data.command[i] + " " + data.object[i]) 
@@ -180,6 +180,8 @@ function processRoomCommand(socket, player, input, marker) {
         markerReached = true // we've reached our marker
         if(!marker) {
           marker = data.marker[i]
+        } else {
+          Util.write(socket, player, {name: "System"}, "", "sender", "chapter")
         }
         player.currentMarker = marker // save marker for later
         player.save()
