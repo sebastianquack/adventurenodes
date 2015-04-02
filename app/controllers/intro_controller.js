@@ -31,10 +31,15 @@ var handleInput = function(socket, player, input) {
     player.name = input
     player.state = "world"
     player.save()
+    socket.set("player", player) // store whole player in socket
+    
+    var response = "Your name is now " + player.name.capitalize() + "."
+    var announcement = oldName + " changed their name to " + player.name.capitalize() + "."
+    Util.logPlayerAction(player, "", response, announcement, false)            
     
     if(player.active) {
-      Util.write(socket, player, {name: "System"}, "Your name is now " + player.name.capitalize() + ".", "sender", null, player)
-      Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, oldName + " changed their name to " + player.name.capitalize() + ".", "everyone else")
+      Util.write(socket, player, {name: "System"}, response, "sender", null, player)
+      Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, announcement, "everyone else")
     } else {
       player.active = true    
       player.save()

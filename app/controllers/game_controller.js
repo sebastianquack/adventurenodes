@@ -23,7 +23,6 @@ module.exports.init = function (io) {
 
       // client detects player action
       socket.on('player-action', function (data) {    
-        console.log(data)
 
         // check if player exists
         Player.findOne({ uuid: data.uuid }).populate('currentNode').exec(function(err, player) {
@@ -37,7 +36,8 @@ module.exports.init = function (io) {
           } 
           
           // connect sockets and players (player can have several sockets)
-          socket.set("uuid", player.uuid) // or: add socket id to player (and clean the list up)
+          //socket.set("uuid", player.uuid) // or: add socket id to player (and clean the list up)
+          socket.set("player", player) // store whole player in socket
           socket.join(player.uuid)
           player.online = true
           
@@ -107,13 +107,12 @@ module.exports.init = function (io) {
       })
 
       socket.on('disconnect', function () {
-        Util.socketGetPlayer(socket, function(player) {
-          player.online = false
-          player.save
+        console.log('disconnect')
+        socket.get("player", function(err, player) {
+          if(player)
+            Util.logPlayerAction(player, "", "You leave.", player.name.capitalize() + " has left.", false)            
         })
-        // remove socket id from player (and clean the list up)
-      });
-
+      })
     })
   })
 }

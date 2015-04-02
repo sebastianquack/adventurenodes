@@ -14,19 +14,16 @@ var PlayerSchema = new Schema({
   state: { type: String, default: '' },
   active: { type: Boolean, default: false },
   inMenu: { type: Boolean, default: false },
-  passphrase: { type: String, default: null },
   currentMarker: { type: String, default: '' },
   currentRoom: { type: String, default: '' },
   previousRoom: { type: String, default: '' },
   currentRoomData: { type: Object, default: {}},  
   currentNode: { type: Schema.Types.ObjectId, ref: 'AdventureNode' },
-  currentBot: { type: String, default: '' },
   currentChat: { type: String, default: '' },
   previousChat: { type: String, default: '' },
   currentIP: { type: String, default: '' },
   blocked: { type: Boolean, default: false }, 
-  quests: [],
-  cities: []
+  nodes: []
 })
 
 /**

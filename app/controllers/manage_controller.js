@@ -20,9 +20,9 @@ module.exports.init = function (io) {
       updateNodeList(socket)
             
       // client has disconnected from socket
-      socket.on('disconnect', function () {
-        console.log('disconnect')
-      })
+      //socket.on('disconnect', function () {
+      //  console.log('disconnect')
+      //})
     
     })
 }

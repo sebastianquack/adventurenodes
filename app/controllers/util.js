@@ -1,6 +1,7 @@
 var mongoose = require('mongoose')
 var ChatItem = mongoose.model('ChatItem')
 var Player = mongoose.model('Player')
+var PlayerAction = mongoose.model('PlayerAction')
 
 // handle errors
 var handleError = function(err) {
@@ -65,7 +66,7 @@ var getObject = function(input) {
 // parse world descriptions for links
 var linkify = function(text) {
 
-  text = text.replace(/\<(.*?)\>/g,'<b data-command="$1"></b>') // parse links
+  text = text.replace(/(?!\<br\>)(\<(.*?)\>)/g,'<b data-command="$2"></b>') // parse links (except for <br>)
     
   text = text.replace(/\_(.*?)\_/g,'<span class="italic">$1</span>') // italic      
   text = text.replace(/\*(.*?)\*/g,'<span class="bold">$1</span>') // bold
@@ -180,6 +181,24 @@ var getClientIp = function(req) {
   return ipAddress;
 }
 
+var logPlayerAction = function(player, input, response, announcement, direct) {
+  var player_action = new PlayerAction({
+    player_uuid: player.uuid,
+    player_name: player.name,
+
+    room: player.currentRoom,
+    node: player.currentNode._id,
+    
+    input: input,
+    response: response,
+    announcement: announcement,
+    direct: direct
+  })
+  player_action.save()
+  console.log(player_action)
+}
+
+
 module.exports.capitaliseFirstLetter = capitaliseFirstLetter
 module.exports.linkify = linkify
 module.exports.getCommand = getCommand
@@ -190,3 +209,4 @@ module.exports.lowerTrim = lowerTrim
 module.exports.socketGetPlayer = socketGetPlayer
 module.exports.playerGetSockets = playerGetSockets
 module.exports.getClientIp
+module.exports.logPlayerAction = logPlayerAction

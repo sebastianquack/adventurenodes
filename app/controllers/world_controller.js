@@ -43,26 +43,35 @@ function getPlayersInRoom(socket, room, callback) {
 }
 
 // announces players to each other, is called when player enters a subnode or looks around
-function announceRoomPlayers(socket, player, announceArrival) {
-    console.log("announcing player")
-    getPlayersInRoom(socket, player.currentRoom, function(roomPlayers) {
+function announceRoomPlayers(socket, player, mode) {
+  if(!player.name) return // prevent weird error on disconnect
+  if(mode == "departure")
+    Util.logPlayerAction(player, "", "You leave.", player.name.capitalize() + " leaves.", false)
+  if(mode == "arrival") 
+    Util.logPlayerAction(player, "", "You arrive.", player.name.capitalize() + " arrives.", false)
+
+  getPlayersInRoom(socket, player.currentRoom, function(roomPlayers) {
       var playerNames = []
       for (i in roomPlayers) { 
-        console.log(roomPlayers[i].name)
         if (player.uuid != roomPlayers[i].uuid) {
           playerNames.push(roomPlayers[i].name) 
-          if (announceArrival) {
+          if (mode == "arrival") {
             Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name.capitalize() + Util.linkify(" just arrived! <say something> <start a conversation>"), "sender", null, roomPlayers[i])
+          }
+          if(mode == "departure") {
+            Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name.capitalize() + Util.linkify(" left."), "sender", null, roomPlayers[i])  
           }
         }
       }
-      switch(playerNames.length) {
-        case 0:  return;
-        case 1:  var list= playerNames[0].capitalize() + " is"; break;
-        case 2:  var list= playerNames[0].capitalize() + " and " + playerNames[1].capitalize() + " are"; break;
-        default: var list= playerNames.splice(0,-1).map(Util.capitaliseFirstLetter).join(", ") + " and " + playerNames[playerNames.length-1].capitalize() + " are"
+      if(mode != "departure") {
+        switch(playerNames.length) {
+          case 0:  return;
+          case 1:  var list= playerNames[0].capitalize() + " is"; break;
+          case 2:  var list= playerNames[0].capitalize() + " and " + playerNames[1].capitalize() + " are"; break;
+          default: var list= playerNames.splice(0,-1).map(Util.capitaliseFirstLetter).join(", ") + " and " + playerNames[playerNames.length-1].capitalize() + " are"
+        }
+        Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, Util.linkify(list + " here. <say something> <start a conversation>"), "sender")
       }
-      Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, Util.linkify(list + " here. <say something> <start a conversation>"), "sender")
     })
 }
 
@@ -145,6 +154,7 @@ function setRoom(player, room, socket) {
 
 // move player to a room
 function enterRoom(player, room, socket) {
+  Util.logPlayerAction(player, "", "You leave.", player.name.capitalize() + " is gone.", false)            
   setRoom(player, room, socket)
   player.currentRoomData = {}
   player.save()    
@@ -161,11 +171,12 @@ function enterChat(socket, player, chatRoom, message) {
 }
 
 // parse input and execute room actions
-function processNodeAction(socket, player, input, marker) {
+function processPlayerAction(socket, player, input, marker) {
   var data = player.currentRoomData
   var actionFound = false
   if (data == undefined) return false
   var response = ""
+  var announcement = ""
   var jump = ""
   var effects = []
   var markers = []
@@ -174,27 +185,29 @@ function processNodeAction(socket, player, input, marker) {
   for (i in data.action) {
     //console.log(i + ": " + data.marker[i] + " " + data.action[i] + " " + data.object[i]) 
 
-    if(data.marker[i]) { // we're on a line with a marker
-      markers.push(data.marker[i])
-      if(!markerReached && data.marker[i] != marker && marker) {
-        continue // it's not our marker, move on
-      }
-      if(data.marker[i] == marker || !marker) {
-        markerReached = true // we've reached our marker
-        if(!marker) {
-          marker = data.marker[i]
-        } else {
-          Util.write(socket, player, {name: "System"}, "", "sender", "chapter")
+    if(data.marker) {
+      if(data.marker[i]) { // we're on a line with a marker
+        markers.push(data.marker[i])
+        if(!markerReached && data.marker[i] != marker && marker) {
+          continue // it's not our marker, move on
         }
-        player.currentMarker = marker // save marker for later
-        player.save()
-      }
-      if(markerReached && data.marker[i] != marker) {
-        break // we've reached the next marker
-      }
-    } else {
-      if(!markerReached && marker) { // we haven't found our marker and we're really looking for one
-        continue
+        if(data.marker[i] == marker || !marker) {
+          markerReached = true // we've reached our marker
+          if(!marker) {
+            marker = data.marker[i]
+          } else {
+            Util.write(socket, player, {name: "System"}, "", "sender", "chapter")
+          }
+          player.currentMarker = marker // save marker for later
+          player.save()
+        }
+        if(markerReached && data.marker[i] != marker) {
+          break // we've reached the next marker
+        }
+      } else {
+        if(!markerReached && marker) { // we haven't found our marker and we're really looking for one
+          continue
+        }
       }
     }
 
@@ -250,11 +263,11 @@ function processNodeAction(socket, player, input, marker) {
 
       // collect response
       if(response != "") response += "<br>"
-      response += Util.linkify(data.response[i])
+      response += data.response[i]
 
       // announce action publicly
       if (data.announcement != undefined && data.announcement[i].length > 0) {
-        Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name.capitalize() + " " + Util.linkify(data.announcement[i]) + ".", "everyone else") // todo only to people in room
+        announcement += player.name.capitalize() + " " + Util.linkify(data.announcement[i]) + "."
       } 
 
       // collect jumps
@@ -266,16 +279,24 @@ function processNodeAction(socket, player, input, marker) {
   }
   // send response
   if (response != "") {
-    Util.write(socket, player, {name: "System"}, response, "sender")
+    Util.write(socket, player, {name: "System"}, Util.linkify(response), "sender")
   }
-
+  
+  // send announcement
+  if (announcement != "") {
+    Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, Util.linkify(announcement), "everyone else") // only to people in room
+  }
+  
+  if(input && response)
+    Util.logPlayerAction(player, input, response, announcement, false)
+    
   // set variable effects
   effects.forEach(function(effect) { setWV(player.currentNode, effect) })
 
   // do jump
   if (jump != "") {
     if(markers.indexOf(jump) != -1) { // check if jump is to a marker
-      processNodeAction(socket, player, "", jump)
+      processPlayerAction(socket, player, "", jump)
     } else 
     if(player.currentNode.subnodes.indexOf(jump) != -1) { // check if jump is to a subnode
       enterRoom(player, player.currentNode.title + "/" + jump, socket)
@@ -308,8 +329,8 @@ function roomEntered(socket, player, data) {
   player.inMenu = false
   player.save()
   
-  processNodeAction(socket, player, null, null) // display base description of room on entry
-  announceRoomPlayers(socket, player, true) // announce player entry to other players
+  processPlayerAction(socket, player, null, null) // display base description of room on entry
+  announceRoomPlayers(socket, player, "arrival") // announce player entry to other players
 }     
 
 // handle world exploration
@@ -341,8 +362,8 @@ var handleInput = function(socket, player, input) {
         // reset marker
         player.currentMarker = null 
         // determine and save the name of the node / city to history
-        if(player.cities.indexOf(node.title) == -1) {
-          player.cities.push(node.title)
+        if(player.nodes.indexOf(node.title) == -1) {
+          player.nodes.push(node.title)
         }
         player.save()
         
@@ -366,7 +387,7 @@ var handleInput = function(socket, player, input) {
 
   // check if player input matches to input from spreadsheet
   if (input != null) {
-    actionFound = processNodeAction(socket, player, input, player.currentMarker)
+    actionFound = processPlayerAction(socket, player, input, player.currentMarker)
   }
 
   // the action player entered was not specified, try to interpret it as general system command
@@ -374,7 +395,7 @@ var handleInput = function(socket, player, input) {
 
     // look around?
     if (input.search(RegexWoBinIch) != -1) {
-      processNodeAction(socket, player, null, player.currentMarker)
+      processPlayerAction(socket, player, null, player.currentMarker)
       announceRoomPlayers(socket, player, null)
       return
     }
@@ -415,6 +436,7 @@ var handleInput = function(socket, player, input) {
       
       case "warp":
         var target = object
+        Util.logPlayerAction(player, "", "You warp to " + target.capitalize(), player.name.capitalize() + " warps to " + target.capitalize() + ".", false)            
         enterRoom(player, target, socket)
         break
 
@@ -432,3 +454,4 @@ var handleInput = function(socket, player, input) {
 module.exports.setRoom = setRoom
 module.exports.enterRoom = enterRoom
 module.exports.handleInput = handleInput
+module.exports.announceRoomPlayers = announceRoomPlayers

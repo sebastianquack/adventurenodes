@@ -356,7 +356,6 @@ var loadRoom = function(socket, player, room, node, callback) {
       spreadsheet.raw.worksheets.forEach(function(worksheet) {
          subnodes.push (worksheet.title)
       })
-    console.log(subnodes)
     node.subnodes = subnodes
     node.markModified("subnodes")  
     node.save(function() {

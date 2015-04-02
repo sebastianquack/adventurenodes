@@ -56,29 +56,29 @@ var handleInput = function(socket, player, input, mode) {
 
   if (input != null & input != "") {
     // reflect player input back to player
-    Util.write(socket, player, player, input , "sender") 
+    Util.write(socket, player, player, input , "sender")
+    Util.logPlayerAction(player, input, "", "", true)
 
-  if(typeof input == "string" && input.search(RegexChatExit) != -1) { // leave chat
-    leaveChat(socket, player, input)
-    Util.write(socket, player, {name: "System"}, "", "sender", null, player) // send empty message to end chat
-  
-    return
-  }
+    if(typeof input == "string" && input.search(RegexChatExit) != -1) { // leave chat
+      leaveChat(socket, player, input)
+      Util.write(socket, player, {name: "System"}, "", "sender", null, player) // send empty message to end chat
+      return
+    }
       
-  // send input to other chat members
-  // (Hint: the easy way to just send to anybody would be: Util.write(socket, player, player, input , "chat") )
+    // send input to other chat members
+    // (Hint: the easy way to just send to anybody would be: Util.write(socket, player, player, input , "chat") )
 
-  var chatPartnerStates = ['chat']
-  if(mode == "start conversation" || mode == "say") {
-     chatPartnerStates.push('world') // pull in other players only when chat is first initated or it's a single chat
-  }
+    var chatPartnerStates = ['chat']
+    if(mode == "start conversation" || mode == "say") {
+       chatPartnerStates.push('world') // pull in other players only when chat is first initated or it's a single chat
+    }
 
-  Player
+    Player
       .find({ 'currentRoom': player.currentRoom })
       .where('_id').ne(player._id)
       .where('state').in(chatPartnerStates)
       .where('online').equals(true)
-  .exec(function (err, availableRoomPlayers) {
+      .exec(function (err, availableRoomPlayers) {
         // TODO: error handling
 
         // change state of recipients
