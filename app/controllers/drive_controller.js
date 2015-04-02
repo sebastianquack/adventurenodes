@@ -358,44 +358,48 @@ var loadRoom = function(socket, player, room, node, callback) {
       })
     console.log(subnodes)
     node.subnodes = subnodes
-    node.save()
+    node.markModified("subnodes")  
+    node.save(function() {
     
-  	// populate cache
-  	if (typeof spreadsheetIdCache[spreadsheetName] == "undefined") {
-  		spreadsheetIdCache[spreadsheetId] = {} 
-  		spreadsheetIdCache[spreadsheetId][spreadsheet.worksheetName] = {worksheetId: spreadsheet.worksheetId}
-  		console.log("cached spreadsheet IDs for " + spreadsheetName + " / " + spreadsheet.worksheetName + " as " + spreadsheet.spreadsheetId + " / " + spreadsheet.worksheetId)
-  	}
-  	else if (typeof spreadsheetIdCache[spreadsheetName][spreadsheet.worksheetName] == "undefined") {
-  		spreadsheetIdCache[spreadsheetId][spreadsheet.worksheetName] = {worksheetId: spreadsheet.worksheetId}
-  		console.log("cached spreadsheet IDs for " + spreadsheetName + " / " + spreadsheet.worksheetName + " as " + spreadsheet.spreadsheetId + " / " + spreadsheet.worksheetId)
-  	}
+    	// populate cache
+    	if (typeof spreadsheetIdCache[spreadsheetName] == "undefined") {
+    		spreadsheetIdCache[spreadsheetId] = {} 
+    		spreadsheetIdCache[spreadsheetId][spreadsheet.worksheetName] = {worksheetId: spreadsheet.worksheetId}
+    		console.log("cached spreadsheet IDs for " + spreadsheetName + " / " + spreadsheet.worksheetName + " as " + spreadsheet.spreadsheetId + " / " + spreadsheet.worksheetId)
+    	}
+    	else if (typeof spreadsheetIdCache[spreadsheetName][spreadsheet.worksheetName] == "undefined") {
+    		spreadsheetIdCache[spreadsheetId][spreadsheet.worksheetName] = {worksheetId: spreadsheet.worksheetId}
+    		console.log("cached spreadsheet IDs for " + spreadsheetName + " / " + spreadsheet.worksheetName + " as " + spreadsheet.spreadsheetId + " / " + spreadsheet.worksheetId)
+    	}
     
-    // process worksheet
-    spreadsheet.receive(function(err, rows, info) {
-      if(err) throw err
+      // process worksheet
+      spreadsheet.receive(function(err, rows, info) {
+        if(err) throw err
 
-    	keys = rows[1]
-    	data = new Object
-    	for (k in keys) {
-        keys[k] = keys[k].trim().replace(/(\r\n|\n|\r)/gm,"") // get rid of common typos
-        data[keys[k]] = []
-    	}
-    	for (i in rows) {
-    		if (i > 1) {
-    			for (k in keys) {
-    				if (typeof rows[i][k] == "undefined") data[keys[k]].push("")
-    				else data[keys[k]].push(rows[i][k])
-    			}
-    		}
-    	}
+      	keys = rows[1]
+      	data = new Object
+      	for (k in keys) {
+          keys[k] = keys[k].trim().replace(/(\r\n|\n|\r)/gm,"") // get rid of common typos
+          data[keys[k]] = []
+      	}
+      	for (i in rows) {
+      		if (i > 1) {
+      			for (k in keys) {
+      				if (typeof rows[i][k] == "undefined") data[keys[k]].push("")
+      				else data[keys[k]].push(rows[i][k])
+      			}
+      		}
+      	}
       
-      // populate cache
-      spreadsheetCache[room] = data
-      // callback
-      if (!cacheDelivered) callback(data)
+        // populate cache
+        spreadsheetCache[room] = data
+        // callback
+        if (!cacheDelivered) callback(data)
       
+      })
+    
     })
+    
   })
 }
 

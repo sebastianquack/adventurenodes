@@ -24,11 +24,11 @@ var handleInput = function(socket, player, input) {
       break
 
     case "reload":
-      Drive.clearCache(player.currentRoom)
+      Drive.clearCache(player.currentRoom.split("/")[0])
       player.inMenu = false
       player.state = "world"
       player.save()
-      World.enterRoom(player, player.currentRoom, socket)
+      World.enterRoom(player, player.currentRoom.split("/")[0], socket)
       break
 
     case "rename":

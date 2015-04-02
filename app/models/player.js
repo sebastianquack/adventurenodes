@@ -19,7 +19,7 @@ var PlayerSchema = new Schema({
   currentRoom: { type: String, default: '' },
   previousRoom: { type: String, default: '' },
   currentRoomData: { type: Object, default: {}},  
-  currentNode: { type: Object, default: {}},  
+  currentNode: { type: Schema.Types.ObjectId, ref: 'AdventureNode' },
   currentBot: { type: String, default: '' },
   currentChat: { type: String, default: '' },
   previousChat: { type: String, default: '' },

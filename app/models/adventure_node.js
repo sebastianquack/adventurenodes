@@ -8,6 +8,7 @@ var Schema = mongoose.Schema
 var AdventureNodeSchema = new Schema({
   title: { type: String, default: '' },
   subnodes: { type: Array, default: [] }, 
+  variables: { type: Object, default: {}},  
   driveId: { type: String, default: '' },
   drivePermissionId: { type: String, default: '' },
   driveLink: { type: String, default: '' },

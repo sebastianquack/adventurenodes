@@ -26,7 +26,7 @@ module.exports.init = function (io) {
         console.log(data)
 
         // check if player exists
-        Player.findOne({ uuid: data.uuid }, function(err, player) {
+        Player.findOne({ uuid: data.uuid }).populate('currentNode').exec(function(err, player) {
           if(err) return Util.handleError(err)
 
           // no player yet, create one

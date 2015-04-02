@@ -17,8 +17,6 @@ var RegexWoBinIch = /^(look|look around)/i
 var RegexWerBinIch = /^(who am I)/i
 var RegexWerIstDa = /^(who is there)/i
 
-var worldVariables = []
-
 /* function declarations */
 
 // get a list of active players in a room
@@ -89,30 +87,35 @@ function parseWV(string) {
 }
 
 // check WorldVariable
-function checkCondition(condition) {
+function checkCondition(node, condition) {
+  //console.log(node)
   if (condition == undefined) return true // no object given
-  if (worldVariables[condition.name] == undefined) { // wv hase not been set
+  if (node.variables[condition.name] == undefined) { // wv hase not been set
     if(condition.operator == "=") return false
     if(condition.operator == "!=") return true
   }
   if(condition.operator == "=") {
-    return (worldVariables[condition.name] == condition.value)
+    return (node.variables[condition.name] == condition.value)
   }
   if(condition.operator == "!=") {
-    return !(worldVariables[condition.name] == condition.value)
+    return !(node.variables[condition.name] == condition.value)
   }
 }
 
-// set WorldVariable
-function setWV(wv) {
+// set node variable
+function setWV(node, wv) {
+  node.markModified('variables')
   if(wv.operator == "=") {
-    worldVariables[wv.name] = wv.value
+    node.variables[wv.name] = wv.value
     console.log("set WV " + wv.name + "=" + wv.value)
+    node.save()
   }
   if(wv.operator == "!=") {
-    worldVariables[wv.name] = undefined
+    node.variables[wv.name] = undefined
     console.log("unset WV " + wv.name)
+    node.save()
   }
+  //console.log(node)
 }
 
 // prepare player for movement
@@ -157,10 +160,10 @@ function enterChat(socket, player, chatRoom, message) {
   Chat.handleInput(socket, player, message, "start conversation")
 }
 
-// parse and execute room commands
-function processRoomCommand(socket, player, input, marker) {
-  data = player.currentRoomData
-  roomCommandFound = false
+// parse input and execute room actions
+function processNodeAction(socket, player, input, marker) {
+  var data = player.currentRoomData
+  var actionFound = false
   if (data == undefined) return false
   var response = ""
   var jump = ""
@@ -168,8 +171,8 @@ function processRoomCommand(socket, player, input, marker) {
   var markers = []
   var markerReached = false
     
-  for (i in data.command) {
-    //console.log(i + ": " + data.marker[i] + " " + data.command[i] + " " + data.object[i]) 
+  for (i in data.action) {
+    //console.log(i + ": " + data.marker[i] + " " + data.action[i] + " " + data.object[i]) 
 
     if(data.marker[i]) { // we're on a line with a marker
       markers.push(data.marker[i])
@@ -195,26 +198,26 @@ function processRoomCommand(socket, player, input, marker) {
       }
     }
 
-    if (i >= data.command.length) { // prevent a strange bug having to do with cached data object being too large
+    if (i >= data.action.length) { // prevent a strange bug having to do with cached data object being too large
       console.log("error prevented: player.currentRoomData too large!")
       continue
     }
     
-    if (data.command[i] != undefined) data.command[i] = data.command[i].toLowerCase().trim()
+    if (data.action[i] != undefined) data.action[i] = data.action[i].toLowerCase().trim()
     if (data.object[i] != undefined)  data.object[i] = data.object[i].toLowerCase().trim()
 
     // check if command and object matches
-    var commands = data.command[i].split(",")
+    var actions = data.action[i].split(",")
     var objects = data.object[i].split(",")  
-    var matchCommand = false
+    var matchAction = false
     var matchObject = false
     
     if(input) {
       
-      commands.some(function(command) {
-        if(command)
-          if(input.indexOf(command.trim()) != -1) {
-            matchCommand = true
+      actions.some(function(action) {
+        if(action)
+          if(input.indexOf(action.trim()) != -1) {
+            matchAction = true
             return true
           }
       })
@@ -235,9 +238,9 @@ function processRoomCommand(socket, player, input, marker) {
     }
     
     // if there's no input and no command or if the input matches command+object && variable conditions are met
-    if( ((!input && commands[0] == '') || (matchCommand && matchObject)) && (condition == null || checkCondition(condition)) ) {
+    if( ((!input && actions[0] == '') || (matchAction && matchObject)) && (condition == null || checkCondition(player.currentNode, condition)) ) {
       
-      roomCommandFound = true
+      actionFound = true
 
       // collect effect
       if (data.effect != undefined && data.effect[i].length > 0) {
@@ -266,12 +269,12 @@ function processRoomCommand(socket, player, input, marker) {
   }
 
   // set variable effects
-  effects.forEach(function(effect) { setWV(effect) })
+  effects.forEach(function(effect) { setWV(player.currentNode, effect) })
 
   // do jump
   if (jump != "") {
     if(markers.indexOf(jump) != -1) { // check if jump is to a marker
-      processRoomCommand(socket, player, "", jump)
+      processNodeAction(socket, player, "", jump)
     } else 
     if(player.currentNode.subnodes.indexOf(jump) != -1) { // check if jump is to a subnode
       enterRoom(player, player.currentNode.title + "/" + jump, socket)
@@ -281,7 +284,7 @@ function processRoomCommand(socket, player, input, marker) {
     }
   }  
 
-  return roomCommandFound
+  return actionFound
 }
 
 // function to process room data loaded from google spreadsheet
@@ -304,7 +307,7 @@ function roomEntered(socket, player, data) {
   player.inMenu = false
   player.save()
   
-  processRoomCommand(socket, player, null, null) // display base description of room on entry
+  processNodeAction(socket, player, null, null) // display base description of room on entry
   announceRoomPlayers(socket, player, true) // announce player entry to other players
 }     
 
@@ -332,21 +335,23 @@ var handleInput = function(socket, player, input) {
       // found the node
       if(node) {
         // save the node in playerx
-        player.currentNode = node
+        player.currentNode = node._id
         
         // reset marker
         player.currentMarker = null 
-        
         // determine and save the name of the node / city to history
         if(player.cities.indexOf(node.title) == -1) {
           player.cities.push(node.title)
         }
         player.save()
         
-        // load room data from google and save it to player
-        Spreadsheets.loadRoom(socket, player, player.currentRoom, node, function(data) {
-          roomEntered(socket, player, data)
-        })      
+        player.populate('currentNode', function() {
+        
+          // load room data from google and save it to player
+          Spreadsheets.loadRoom(socket, player, player.currentRoom, node, function(data) {
+            roomEntered(socket, player, data)
+          })      
+        })
               
       // no node found
       } else {
@@ -360,15 +365,15 @@ var handleInput = function(socket, player, input) {
 
   // check if player input matches to input from spreadsheet
   if (input != null) {
-    roomCommandFound = processRoomCommand(socket, player, input, player.currentMarker)
+    actionFound = processNodeAction(socket, player, input, player.currentMarker)
   }
 
-  // the command player entered was not specified, try to interpret it as general system command
-  if (!roomCommandFound) {
+  // the action player entered was not specified, try to interpret it as general system command
+  if (!actionFound) {
 
     // look around?
     if (input.search(RegexWoBinIch) != -1) {
-      processRoomCommand(socket, player, null, player.currentMarker)
+      processNodeAction(socket, player, null, player.currentMarker)
       announceRoomPlayers(socket, player, null)
       return
     }
