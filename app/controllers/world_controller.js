@@ -249,7 +249,8 @@ function processNodeAction(socket, player, input, marker) {
       }   
 
       // collect response
-      response = response + Util.linkify(data.response[i]) + " "
+      if(response != "") response += "<br>"
+      response += Util.linkify(data.response[i])
 
       // announce action publicly
       if (data.announcement != undefined && data.announcement[i].length > 0) {
