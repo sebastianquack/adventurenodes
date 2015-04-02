@@ -104,6 +104,8 @@ var fillCommandGaps = function() {
 
 var clearChat = function() {
   $('#chat section p.incoming').remove()
+  $('#action-log').html('')
+  $('#action-log-link').data('limit', '')
 }
 
 /* let's go! */
