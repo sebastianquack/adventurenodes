@@ -7,6 +7,7 @@ var Schema = mongoose.Schema
 
 var ChatItemSchema = new Schema({
   player_uuid: { type: String, default: '' },
+  sender_uuid: { type: String, default: '' },
   sender_name: { type: String, default: '' },
   player_name: { type: String, default: '' },
   player_room: { type: String, default: ''},

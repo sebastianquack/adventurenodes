@@ -171,7 +171,8 @@ $(document).ready(function() {
     if(data.sender_name == "System") {
       newElem = $('<p>' + data.value + '</p>')
     } else {
-      if(data.player_uuid == $.cookie('an_uuid')) 
+      console.log(data)
+      if(data.sender_uuid == $.cookie('an_uuid')) 
         newElem = $('<p data-sender="You">' + data.value + '</p>')
       else
         newElem = $('<p data-sender="'+data.sender_name+'">' + data.value + '</p>')

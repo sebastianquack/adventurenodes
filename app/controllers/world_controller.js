@@ -46,7 +46,7 @@ function getPlayersInRoom(socket, room, callback) {
 function announceRoomPlayers(socket, player, mode) {
   if(!player.name) return // prevent weird error on disconnect
   if(mode == "departure")
-    Util.logPlayerAction(player, "", "You leave.", player.name.capitalize() + " leaves.", false)
+    Util.logPlayerAction(player, "", "You're gone.", player.name.capitalize() + " is gone.", false)
   if(mode == "arrival") 
     Util.logPlayerAction(player, "", "You arrive.", player.name.capitalize() + " arrives.", false)
 
@@ -59,7 +59,7 @@ function announceRoomPlayers(socket, player, mode) {
             Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name.capitalize() + Util.linkify(" just arrived! <say something> <start a conversation>"), "sender", null, roomPlayers[i])
           }
           if(mode == "departure") {
-            Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name.capitalize() + Util.linkify(" left."), "sender", null, roomPlayers[i])  
+            Util.write(socket, player, {name: "System", currentRoom: player.currentRoom}, player.name.capitalize() + Util.linkify(" is gone."), "sender", null, roomPlayers[i])  
           }
         }
       }
@@ -157,7 +157,8 @@ function enterRoom(player, room, socket) {
   Util.logPlayerAction(player, "", "You leave.", player.name.capitalize() + " is gone.", false)            
   setRoom(player, room, socket)
   player.currentRoomData = {}
-  player.save()    
+  player.save()
+  socket.set("player", player) // store whole player in socket    
   handleInput(socket, player, null)
 }
 

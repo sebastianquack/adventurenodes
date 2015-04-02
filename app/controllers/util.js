@@ -110,10 +110,11 @@ var write = function(socket, player, emitter, value, mode, type, recipient) {
 
   var chat_item = new ChatItem({ 
     player_uuid: player.uuid, 
-    sender_name: emitter.name,
     player_name: (mode == "sender" || mode == "socket") ? player.name : null, 
     player_room: (mode == "sender" || mode == "socket") ? player.currentRoom : null, 
     player_state: (mode == "sender" || mode == "socket") ? player.state : null,
+    sender_name: emitter.name,
+    sender_uuid: emitter.uuid,
     nodeLink: player.currentNode ? player.currentNode.driveLink : null,
     value: value, 
     type: type,

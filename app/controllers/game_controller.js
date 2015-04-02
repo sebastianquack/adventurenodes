@@ -37,7 +37,7 @@ module.exports.init = function (io) {
           } 
           
           // connect sockets and players (player can have several sockets)
-          //socket.set("uuid", player.uuid) // or: add socket id to player (and clean the list up)
+          socket.set("uuid", player.uuid) // or: add socket id to player (and clean the list up)
           socket.set("player", player) // store whole player in socket
           socket.join(player.uuid)
           player.online = true
@@ -123,7 +123,8 @@ module.exports.init = function (io) {
         console.log('disconnect')
         socket.get("player", function(err, player) {
           if(player)
-            Util.logPlayerAction(player, "", "You leave.", player.name.capitalize() + " has left.", false)            
+            //Util.logPlayerAction(player, "", "You are gone.", player.name.capitalize() + " is gone.", false)          
+            World.announceRoomPlayers(socket, player, "departure")
         })
       })
     })
