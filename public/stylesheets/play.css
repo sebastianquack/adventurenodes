@@ -319,6 +319,19 @@ body.nontouch #input-command {
 body.touch #input-fake {
   display: none;
 }
+
+span#action-log-link {
+	color: #777;
+	cursor: pointer;
+	font-size: 0.9em;	
+}
+
+span.timestamp {
+	color: #777;
+	font-size: 0.9em;
+	text-transform: lowercase;
+}
+
 @media print {
   b[data-command] {
     font-weight: normal;

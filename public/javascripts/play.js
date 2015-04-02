@@ -171,7 +171,10 @@ $(document).ready(function() {
     if(data.sender_name == "System") {
       newElem = $('<p>' + data.value + '</p>')
     } else {
-      newElem = $('<p data-sender="'+data.sender_name+'">' + data.value + '</p>')
+      if(data.player_uuid == $.cookie('an_uuid')) 
+        newElem = $('<p data-sender="You">' + data.value + '</p>')
+      else
+        newElem = $('<p data-sender="'+data.sender_name+'">' + data.value + '</p>')
     }
     if (data.type != undefined) newElem = newElem.addClass(data.type)
     newElem = newElem.addClass("incoming")
@@ -227,8 +230,10 @@ $(document).ready(function() {
   // focus input field
   if(!touchDevice) {
     $('body').not("b[data-command], #input-command").on("keypress click focus resize load", function(event){
-      scrollInput()
-      $('#input-command').focus()
+      if(event.target.id != "action-log-link") {
+        scrollInput()
+        $('#input-command').focus()
+      }
     })
   } else {
     $('#input').on("click", function(event){
@@ -270,6 +275,45 @@ $(document).ready(function() {
       submitCommand()
     }
   })
+  
+  // log management
+  
+  $('#action-log-link').click(function() {
+    socket.emit('log-load', { uuid: $.cookie('an_uuid'), limit: $('#action-log-link').data('limit') })
+  })
+
+  socket.on('log-update', function (data) {
+    console.log(data)
+    if(data)
+      if(data.length > 0) {
+        $('#action-log-link').data('limit', data[data.length - 1].time)
+        $('#action-log').hide()
+        data.forEach(function (action) {
+          var timestamp = "  <span class='timestamp'>" + jQuery.format.prettyDate(new Date(action.time)) +  "</span>"
+          if(action.direct) {
+            if(action.player_uuid == $.cookie('an_uuid')) 
+              var newElem = $('<p data-sender="You">' + action.input + timestamp + '</p>')
+            else
+              var newElem = $('<p data-sender="' + action.player_name + '">' + action.input + timestamp + '</p>')
+          }
+          else {
+            if(action.player_uuid == $.cookie('an_uuid'))
+              var newElem = $("<p>" + action.response + timestamp + "</p>")
+            else 
+              var newElem = $("<p>" + action.announcement + timestamp + "</p>")
+          }
+          $('#action-log').prepend(newElem)
+        })
+        $('#action-log').slideToggle()        
+      }
+    else {
+      console.log("end")
+      $('#action-log-link').html("the beginning of time")
+    }
+    
+  })
+  
+  // menu events
     
   $('.fullscreen-toggle').click(function() {
     var play_url = location.protocol + '//' + location.hostname + (location.port ? ':'+location.port : '') + '/play'

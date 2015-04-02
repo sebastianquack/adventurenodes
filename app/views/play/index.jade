@@ -3,7 +3,7 @@ extends ./play_layout.jade
 block content  
 
   header#top
-    h1 adventure nodes: 
+    h1 
       span(id='node-title')
     nav(role='navigation')
       button(type='button', data-menu='help', class='help-btn')
@@ -26,8 +26,11 @@ block content
         li
           b(id='embed-link') Embed this node
 
-
   div#chat
+    section
+      p
+        span(id='action-log-link' data-limit='') see what happened here earlier
+      div(id='action-log')
     p(id='input')
       span(id='input-fake')
         i(id='cursor')

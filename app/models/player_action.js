@@ -6,7 +6,7 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 
 var PlayerActionSchema = new Schema({
-  time: { type : Date, default: Date.now }, // when?
+  time: { type : Number, default: Date.now }, // when?
 
   player_uuid: { type: String, default: '' }, // who?
   player_name: { type: String, default: '' },

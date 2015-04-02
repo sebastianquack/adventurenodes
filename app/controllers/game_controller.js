@@ -2,6 +2,7 @@
 
 var mongoose = require('mongoose')
 var Player = mongoose.model('Player')
+var PlayerAction = mongoose.model('PlayerAction')
 
 var Util = require('./util.js')
 var World = require('./world_controller.js')
@@ -103,6 +104,18 @@ module.exports.init = function (io) {
             
           }
 
+        })
+      })
+
+      socket.on('log-load', function (data) {    
+        if(!data.limit) data.limit = Date.now()
+        console.log("query")
+        console.log(data)
+        Player.findOne({ uuid: data.uuid }).exec(function(err, player) {        
+          PlayerAction.find({ room: player.currentRoom, time: {$lte: data.limit} }).sort({ time: -1 }).limit(10).exec(function(err, actions) {
+            console.log(actions)
+            socket.emit('log-update', actions) 
+          })
         })
       })
 
