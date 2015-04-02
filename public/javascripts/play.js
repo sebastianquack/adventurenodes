@@ -36,8 +36,8 @@ function submitCommand() {
   if (val.trim()=="") return
   
   switch(val.trim()) {
-    case "clear":    
-      $('#chat section p.incoming').remove() // todo: move everything into archive + animate!      
+    case "clear":
+      clearChat()    
       break
     case "logout":
       $.cookie('an_uuid', uuid.v1(), { expires: 31 }) // create new uuid
@@ -98,8 +98,12 @@ scrollInput = function() {
 
 }
 
-fillCommandGaps = function() {
+var fillCommandGaps = function() {
   $("#chat section:not(:last-child)").addClass("done")
+}
+
+var clearChat = function() {
+  $('#chat section p.incoming').remove()
 }
 
 /* let's go! */
@@ -145,8 +149,13 @@ $(document).ready(function() {
   // a chat item comes in from the server
   socket.on('chat-update', function (data) {
 
-    if (data.player_room != null && player.currentRoom != data.player_room || data.type == "chapter") {
+    if (data.player_room != null && player.currentRoom != data.player_room) {
+      clearChat()
       $('#chat').append($('<section>'))
+      var subnode = ""
+      if(data.player_room.split("/").length == 2)
+        subnode = ": " + data.player_room.split("/")[1]
+      $('#node-title').html(data.player_room.split("/")[0] + subnode)
     }
 
     var previousRoom = player.currentRoom // save room for later
@@ -163,8 +172,7 @@ $(document).ready(function() {
     
     if(data.value.indexOf("\clear") != -1) {
       data.value = data.value.replace("\\clear", "")
-      console.log("clear")
-      $('#chat section p.incoming').remove() // todo: move everything into archive + animate!
+      clearChat()
     }
     
     // add text
@@ -222,7 +230,12 @@ $(document).ready(function() {
         console.log("pushState: " + newPath)
         history.pushState(null, null, newPath)
         everPushedSomething = true
-        $('#node-title').html(player.currentRoom.split("/")[0])
+      }
+      // update title
+      if(player.currentRoom != previousRoom) {
+        if(player.currentRoom.split("/").length == 2)
+          subnode = ": " + player.currentRoom.split("/")[1]
+        $('#node-title').html(player.currentRoom.split("/")[0] + subnode)
       }
     }
     

@@ -322,6 +322,15 @@ function roomEntered(socket, player, data) {
     }
     return
   }
+
+  console.log("current room: " + player.currentRoom)
+  
+  if(player.currentRoom.indexOf("/") == -1 && player.currentNode.subnodes.length >= 1) {
+    if(player.currentNode.subnodes[0] != "Sheet1")
+      player.currentRoom += "/" + player.currentNode.subnodes[0]
+  }
+    
+  console.log("room: " + player.currentRoom)
   
   // save room data in player
   setRoom(player, player.currentRoom, socket)
