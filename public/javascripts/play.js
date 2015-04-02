@@ -295,14 +295,14 @@ $(document).ready(function() {
   // log management
   
   $('#action-log-link').click(function() {
-    socket.emit('log-load', { uuid: $.cookie('an_uuid'), limit: $('#action-log-link').data('limit') })
+    socket.emit('log-load', { uuid: $.cookie('an_uuid'), limit: $('#action-log-link').attr('data-limit') })
   })
 
   socket.on('log-update', function (data) {
     console.log(data)
     if(data)
       if(data.length > 0) {
-        $('#action-log-link').data('limit', data[data.length - 1].time)
+        $('#action-log-link').attr('data-limit', data[data.length - 1].time)
         $('#action-log').hide()
         data.forEach(function (action) {
           var timestamp = "  <span class='timestamp'>" + jQuery.format.prettyDate(new Date(action.time)) +  "</span>"
@@ -321,6 +321,8 @@ $(document).ready(function() {
           $('#action-log').prepend(newElem)
         })
         $('#action-log').slideToggle()        
+        if(data.length < 10)
+          $('#action-log-link').html("the beginning of time")
       }
     else {
       console.log("end")

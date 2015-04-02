@@ -112,7 +112,7 @@ module.exports.init = function (io) {
         console.log("query")
         console.log(data)
         Player.findOne({ uuid: data.uuid }).exec(function(err, player) {        
-          PlayerAction.find({ room: player.currentRoom, time: {$lte: data.limit} }).sort({ time: -1 }).limit(10).exec(function(err, actions) {
+          PlayerAction.find({ room: player.currentRoom, time: {$lt: data.limit} }).sort({ time: -1 }).limit(10).exec(function(err, actions) {
             console.log(actions)
             socket.emit('log-update', actions) 
           })

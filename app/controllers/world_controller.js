@@ -45,8 +45,8 @@ function getPlayersInRoom(socket, room, callback) {
 // announces players to each other, is called when player enters a subnode or looks around
 function announceRoomPlayers(socket, player, mode) {
   if(!player.name) return // prevent weird error on disconnect
-  if(mode == "departure")
-    Util.logPlayerAction(player, "", "You're gone.", player.name.capitalize() + " is gone.", false)
+  //if(mode == "departure")
+  //  Util.logPlayerAction(player, "", "You're gone.", player.name.capitalize() + " is gone.", false)
   if(mode == "arrival") 
     Util.logPlayerAction(player, "", "You arrive.", player.name.capitalize() + " arrives.", false)
 
@@ -154,7 +154,7 @@ function setRoom(player, room, socket) {
 
 // move player to a room
 function enterRoom(player, room, socket) {
-  Util.logPlayerAction(player, "", "You leave.", player.name.capitalize() + " is gone.", false)            
+  //Util.logPlayerAction(player, "", "You leave.", player.name.capitalize() + " is gone.", false)            
   setRoom(player, room, socket)
   player.currentRoomData = {}
   player.save()
