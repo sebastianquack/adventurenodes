@@ -351,6 +351,7 @@ $(document).ready(function() {
         $('#action-log-more').show()
         $('#action-log-close').show()
         var add = ""
+        data.reverse()
         data.forEach(function (action) {
           var timestamp = "  <span class='timestamp'>" + jQuery.format.prettyDate(new Date(action.time)) +  "</span>"
           if(action.direct) {
