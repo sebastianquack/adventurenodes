@@ -16,7 +16,7 @@ block content
         li
           b(data-menu='help') How to play
         li
-          b(data-menu='rename') Choose a different name
+          b(data-menu='rename') Pick a name for yourself
         li
           b(data-menu='restart') Restart this node
         li
@@ -27,10 +27,11 @@ block content
           b(id='embed-link') Embed this node
 
   div#chat
-    section
-      p
-        span(id='action-log-link' data-limit='') see what happened here earlier
+    div(id='action-log-container')
+      p(id='action-log-more' data-limit='') see more history
       div(id='action-log')
+      p(id='action-log-open') see what happened here earlier
+      p(id='action-log-close') close history
     p(id='input')
       span(id='input-fake')
         i(id='cursor')

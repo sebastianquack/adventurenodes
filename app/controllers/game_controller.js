@@ -32,7 +32,11 @@ module.exports.init = function (io) {
           // no player yet, create one
           if(!player) {
             player = new Player({ uuid: data.uuid }) // use data as name
-            player.state = "welcome"
+            //player.state = "welcome"
+            // skip intro
+            player.state = "world"
+            player.name = "Someone"
+            player.active = true
             player.save()
           } 
           
@@ -112,7 +116,7 @@ module.exports.init = function (io) {
         console.log("query")
         console.log(data)
         Player.findOne({ uuid: data.uuid }).exec(function(err, player) {        
-          PlayerAction.find({ room: player.currentRoom, time: {$lt: data.limit} }).sort({ time: -1 }).limit(10).exec(function(err, actions) {
+          PlayerAction.find({ room: player.currentRoom, time: {$lt: data.limit} }).sort({ time: 1 }).limit(10).exec(function(err, actions) {
             console.log(actions)
             socket.emit('log-update', actions) 
           })

@@ -104,8 +104,31 @@ var fillCommandGaps = function() {
 
 var clearChat = function() {
   $('#chat section p.incoming').remove()
+  resetLog()
+}
+
+var resetLog = function() {
+  $('#action-log-close').hide()
   $('#action-log').html('')
-  $('#action-log-link').data('limit', '')
+  $('#action-log-more').attr('data-limit', '')
+  $('#action-log-more').html('see more history')
+  $('#action-log-more').removeClass('end')
+  $('#action-log-more').hide()
+  $('#action-log-open').show()
+}
+
+var openLog = function() {
+  if($('#action-log').css("display", "none")) {
+    $('#action-log-open').hide()
+    $('#action-log-more').show()
+    $('#action-log-close').show()
+    $('#action-log').show()    
+    $('#chat').scrollTop($('#action-log').innerHeight())
+  }    
+}
+
+var updateLog = function() {
+  socket.emit('log-load', { uuid: $.cookie('an_uuid'), limit: $('#action-log-more').attr('data-limit') })
 }
 
 /* let's go! */
@@ -151,7 +174,11 @@ $(document).ready(function() {
   // a chat item comes in from the server
   socket.on('chat-update', function (data) {
 
-    if (data.player_room != null && player.currentRoom != data.player_room) {
+    if(data.player_state == "world") {
+      $('#action-log-container').show()
+    }
+    
+    if (data.player_room != null && player.currentRoom != data.player_room) { // player entered a room
       clearChat()
       $('#chat').append($('<section>'))
       var subnode = ""
@@ -246,7 +273,7 @@ $(document).ready(function() {
   // focus input field
   if(!touchDevice) {
     $('body').not("b[data-command], #input-command").on("keypress click focus resize load", function(event){
-      if(event.target.id != "action-log-link") {
+      if(event.target.id != "action-log-open" && event.target.id != "action-log-more") {
         scrollInput()
         $('#input-command').focus()
       }
@@ -292,47 +319,77 @@ $(document).ready(function() {
     }
   })
   
-  // log management
-  
-  $('#action-log-link').click(function() {
-    socket.emit('log-load', { uuid: $.cookie('an_uuid'), limit: $('#action-log-link').attr('data-limit') })
+  // user opens logs
+  $('#action-log-open').click(function(event) {
+    if($('#action-log').html() == '') {
+      updateLog()
+    } else {
+      openLog()
+    }
   })
 
+  // user wants to load more loog data  
+  $('#action-log-more').click(function(event) {
+    if(!$(event.target).hasClass('end')) updateLog()
+  })
+
+  // user clicks log close button
+  $('#action-log-close').click(function() {
+    $('#action-log').slideToggle()        
+    $('#action-log-more').hide()
+    $('#action-log-close').hide()
+    $('#action-log-open').show()
+  })
+
+  // data from log comes in
   socket.on('log-update', function (data) {
-    console.log(data)
+    //console.log(data)
     if(data)
       if(data.length > 0) {
-        $('#action-log-link').attr('data-limit', data[data.length - 1].time)
-        $('#action-log').hide()
+        $('#action-log-open').hide()
+        $('#action-log-more').attr('data-limit', data[data.length - 1].time)
+        $('#action-log-more').show()
+        $('#action-log-close').show()
+        var add = ""
         data.forEach(function (action) {
           var timestamp = "  <span class='timestamp'>" + jQuery.format.prettyDate(new Date(action.time)) +  "</span>"
           if(action.direct) {
             if(action.player_uuid == $.cookie('an_uuid')) 
-              var newElem = $('<p data-sender="You">' + action.input + timestamp + '</p>')
+              add += '<p data-sender="You">' + action.input + timestamp + '</p>'
             else
-              var newElem = $('<p data-sender="' + action.player_name + '">' + action.input + timestamp + '</p>')
+              add += '<p data-sender="' + action.player_name + '">' + action.input + timestamp + '</p>'
           }
           else {
             if(action.player_uuid == $.cookie('an_uuid'))
-              var newElem = $("<p>" + action.response + timestamp + "</p>")
+              add += "<p>" + action.response + timestamp + "</p>"
             else 
-              var newElem = $("<p>" + action.announcement + timestamp + "</p>")
+              add += "<p>" + action.announcement + timestamp + "</p>"
           }
-          $('#action-log').prepend(newElem)
+          
         })
-        $('#action-log').slideToggle()        
-        if(data.length < 10)
-          $('#action-log-link').html("the beginning of time")
+        if(data.length < 10) {
+          $('#action-log-more').html("the beginning of time")
+          $('#action-log-more').addClass("end")
+        }
+        var before = $('#action-log').innerHeight()
+        $('#action-log').prepend(add)
+        var after = $('#action-log').innerHeight()
+        var delta = after - before
+        $('#action-log').show()
+        $('#chat').scrollTop(delta)
       }
     else {
-      console.log("end")
-      $('#action-log-link').html("the beginning of time")
+      $('#action-log-more').show()
+      $('#action-log-open').hide()
+      $('#action-log-more').html("the beginning of time")        
+      $('#action-log-more').addClass("end")
     }
     
   })
   
-  // menu events
+  /* menu events */
     
+  // user clicks fullscreen button
   $('.fullscreen-toggle').click(function() {
     var play_url = location.protocol + '//' + location.hostname + (location.port ? ':'+location.port : '') + '/play'
     if(target_node) {
@@ -340,7 +397,8 @@ $(document).ready(function() {
     } 
     window.open(play_url)
   })
-  
+
+  // user clicks embed link
   $('#embed-link').click(function() {
     var embed_url = location.protocol + '//' + location.hostname + (location.port ? ':'+location.port : '') + '/embed'
     if(target_node) {
@@ -349,15 +407,18 @@ $(document).ready(function() {
     window.location = embed_url
   })
 
+  // user clicks edit link
   $('#edit-link').click(function() {
     $('nav').removeClass('show');
   })
 
-
+  // user clicks manage link
   $('#manage-link').click(function() {
     var manage_url = location.protocol + '//' + location.hostname + (location.port ? ':'+location.port : '') + '/'
     window.location = manage_url
   })
+
+  /* cursor effects */
 
   // blink cursor
   setInterval(function(){ $("#cursor").toggleClass("inverted")}, 650);

@@ -320,10 +320,21 @@ body.touch #input-fake {
   display: none;
 }
 
-span#action-log-link {
+#action-log-container {
+	display: none;
+}
+
+#action-log-open, #action-log-close, #action-log-more {
 	color: #777;
 	cursor: pointer;
-	font-size: 0.9em;	
+}
+
+#action-log-close, #action-log-more {
+	display:none;
+}
+
+#action-log-more.end {
+	cursor: text;
 }
 
 span.timestamp {

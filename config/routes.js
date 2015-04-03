@@ -12,7 +12,7 @@ module.exports = function (app) {
 
   // render node management area
   app.get('/', function (req, res) { 
-    res.render('manage', {title: 'adventure nodes', node_title: 'title'})
+    res.render('manage', {title: 'Adventure Nodes', node_title: 'title'})
   })
 
   // send user to google to authenticate drive
