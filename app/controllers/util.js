@@ -183,20 +183,22 @@ var getClientIp = function(req) {
 }
 
 var logPlayerAction = function(player, input, response, announcement, direct) {
-  var player_action = new PlayerAction({
-    player_uuid: player.uuid,
-    player_name: player.name,
+  if(player) {
+    var player_action = new PlayerAction({
+      player_uuid: player.uuid,
+      player_name: player.name,
 
-    room: player.currentRoom,
-    node: player.currentNode._id,
+      room: player.currentRoom,
+      node: player.currentNode ? player.currentNode._id : null,
     
-    input: input,
-    response: response,
-    announcement: announcement,
-    direct: direct
-  })
-  player_action.save()
-  console.log(player_action)
+      input: input,
+      response: response,
+      announcement: announcement,
+      direct: direct
+    })
+    player_action.save()
+    console.log(player_action)
+  }
 }
 
 
