@@ -4,6 +4,8 @@ var mongoose = require('mongoose')
 var AdventureNode = mongoose.model('AdventureNode')
 var google = require('googleapis')
 var Util = require('./util.js')
+var manage_controller = require('manage_controller')
+
 
 /* variables */
 
@@ -34,6 +36,12 @@ var spreadsheetIdCache = {}
 var spreadsheetCache = {}
 
 /* functions */
+
+// request authorization to get info on user
+var authorize_about = function(req, res) {
+  req.session.driveAction = "about"
+  res.redirect(url)
+}
 
 // respond to user create new node action, send user to google for authorization
 var authorize_create = function(req, res) {
@@ -72,7 +80,11 @@ var authorize_remove = function(req, res) {
 
 // respond to google's callback
 var handle_callback = function(req, res) {
+  console.log("google callback with " + req.session.driveAction)
   switch(req.session.driveAction) {
+    case "about":
+      get_user_info(req, res)
+      break
     case "create": 
       new_spreadsheet(req, res)
       break
@@ -95,11 +107,29 @@ var getAccessToken = function(code, callback) {
     })
 }
 
+// get info on user
+var get_user_info = function(req, res) {
+  getAccessToken(req.query.code, function() {
+    drive.about.get(function(err, data) {
+      if(err) {
+        console.log(err)
+        res.redirect('/')      
+        return
+      }
+      console.log(data.user.permissionId)
+      manage_controller.loadCreated(data.user.permissionId, req, res)
+    })
+  })
+}
+
 // create new spreadsheet 
 var new_spreadsheet = function(req, res) {
   getAccessToken(req.query.code, function() {
-    upload(req.session.nodeBaseId, req.session.nodeSheetId, req.session.nodeTitle, function() { // retrieve title
+    upload(req.session.nodeBaseId, req.session.nodeSheetId, req.session.nodeTitle, function(ownerId) { // retrieve title
+      console.log("handing off to manage_controller " + ownerId)
+      req.session.driveUserId = ownerId
       res.redirect('/')      
+      //manage_controller.loadCreated(ownerId, req, res)
     })
   })
 }
@@ -109,14 +139,18 @@ var upload = function(baseId, sheetId, title, callback) {
   // if sheetId is defined take an existing sheet
   if(sheetId != 'undefined') {
     console.log(sheetId)
-    var data = {
-      id: sheetId,
-      alternateLink: 'https://docs.google.com/spreadsheets/d/' + sheetId + '/edit#gid=0',
-      title: title
-    }
-    console.log(data)
-    createNodeAndSetupPermissions(data, callback)       
-
+    drive.files.get({
+      fileId: sheetId,
+      auth: auth
+    }, function(err, data) {
+      if(err) { 
+        console.log(err) // copy works but this throws 404 file not found error - why??
+        callback()
+        return
+      }
+      data.title = title
+      createNodeAndSetupPermissions(data, callback)       
+    })
   } else
   // if fileId is specified, copy spreadsheet to user drive
   if(baseId != 'undefined') {
@@ -125,8 +159,9 @@ var upload = function(baseId, sheetId, title, callback) {
        resource: { 
          title: title,
          parents: [{id: "root"}]
-        }
-      }, function(err, data) {
+       },
+       auth: auth
+    }, function(err, data) {
         if(err) { 
           console.log(err) // copy works but this throws 404 file not found error - why??
           callback()
@@ -142,8 +177,10 @@ var upload = function(baseId, sheetId, title, callback) {
       },
       auth: auth
     }, function(err, data) {
-      createNodeAndSetupPermissions(data, function() {
-        baseSetupSpreadsheet(data.id, callback) // setup table header
+      createNodeAndSetupPermissions(data, function(ownerId) {
+        baseSetupSpreadsheet(data.id, function() { // setup table header
+          callback(ownerId) 
+        }) 
       })                         
     })        
   } 
@@ -151,11 +188,15 @@ var upload = function(baseId, sheetId, title, callback) {
 
 var createNodeAndSetupPermissions = function(data, callback) {
   
+  var ownerId = data.owners[0].permissionId
+  console.log("owner id " + ownerId)
+  
   // create node object to link to google spreadsheet
   var new_adventure_node = new AdventureNode({ 
     driveId: data.id,
     driveLink: data.alternateLink, // this is how a user can access her file
-    title: data.title
+    title: data.title,
+    ownerId: ownerId
   }) 
   new_adventure_node.save()
   console.log(new_adventure_node)
@@ -178,7 +219,8 @@ var createNodeAndSetupPermissions = function(data, callback) {
     }
     //console.log(permission_data)
     new_adventure_node.drivePermissionId = permission_data.id
-    new_adventure_node.save(callback)
+    new_adventure_node.save()
+    callback(ownerId)
   })
 }
 
@@ -221,41 +263,37 @@ var remove_spreadsheet = function(req, res) {
 // creates a new spreadsheet on user's account, shares with service account
 var remove = function(id, callback) {
 
-    console.log("touching file " + id)
-    drive.files.touch({
-      fileId: id,
-      auth: auth
-    }, function(err, data) {
-      
-      if(!err) {
-      
-        // remove adventure node from database
-        var permissionId
-        AdventureNode.findOne( { driveId: id } , function(err, node) {
-          if(err) return handleError(err)
-          console.log(node)
-          permissionId = node.drivePermissionId // save permission Id for later
-          node.remove()
+  AdventureNode.findOne( { _id: id } , function(err, node) {
+    if(err) return handleError(err)
         
-          console.log("saved permissionId to " + permissionId)
+      console.log("touching file " + id)
+      drive.files.touch({
+        fileId: node.driveId,
+        auth: auth
+      }, function(err, data) {
       
+        if(!err) {
+      
+          // remove adventure node from database
+          var permissionId
+          permissionId = node.drivePermissionId // save permission Id for later
+          console.log("saved permissionId to " + permissionId)
+                  
           // remove permission of service account
           drive.permissions.delete({
-            fileId: id,
+            fileId: node.driveId,
             permissionId: permissionId,
             auth: auth
           }, function(err, permission_data) {
             if(err) {
               console.log(err)
             }
-          })      
-        
-        })
-        
-      }
-      callback()      
-      
-    })  
+            node.remove() //remove node from database
+            callback()      
+          })
+        }
+     })  
+  })
 }
 
 // reads spreadsheet data and dumps to the console
@@ -403,6 +441,7 @@ var loadRoom = function(socket, player, room, node, callback) {
 }
 
 /* expose */
+module.exports.authorize_about = authorize_about
 module.exports.authorize_create = authorize_create
 module.exports.authorize_remove = authorize_remove
 module.exports.handle_callback = handle_callback

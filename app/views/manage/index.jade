@@ -5,19 +5,52 @@ block content
   h2 A platform for collaborative storytelling and shared exploration
   
   p An adventure node is like a chatroom with a text adventure game built into it. To jump into a node, just follow the "play" link on one of the nodes below. Watch out - adventure nodes can be interconnected! You never know where you end up. 
-
-  ul(id='adventure-nodes-list')
   
-  p You can also add your own node! To get started, enter a title for your node and either start from scratch or base it on one of our examples. All your node's data is stored in google spreadsheets that you can edit alone or together with friends.
-  input(id='node-title', value=node_title) 
+  h3 Published Nodes
+  ul(id='public-nodes-list')
+    each node in locals.publicNodes
+      li
+        =node.title
+        | 
+        a(href="/play" + node.title) play
+  
+  h3 Example Nodes
+  p Here are a few example nodes that showcase different features of the Adventure Nodes platform.
+  ul(id='example-nodes-list')
+    each node in locals.exampleNodes
+      li
+        =node.title
+        |  
+        a(href="/play/" + node.title) play
+        | 
+        a(href=node.driveLink) view 
+
+  h3 Your Nodes
+  ul(id='created-nodes-list')
+    if locals.createdNodes
+      each node in locals.createdNodes
+        li
+          =node.title
+          |  
+          a(href="/play/" + node.title) play
+          | 
+          a(href=node.driveLink) edit
+          | 
+          a(href="/manage/remove/" + node.id, class="remove-link") remove
+
+
+  button(id='load-created-nodes') Load nodes created by you
+  
+  p Create your own node! To get started, enter a title for your node and either start from scratch or base it on one of our examples. All your node's data is stored in google spreadsheets that you can edit alone or together with friends.
+
+  input(id='node-title', value='title') 
   br
   span based on an example 
   select(id='node-base')
     option empty node
-    option(data-id='1ole9s7GaUiHJRBbaGQ2szhIaFBRbNKjwvFNiwZbsavc') example1
-    option(data-id='12oh6CME2RuY0e9PNEkWBktm6YS2fl4viFgWtdeRxhLo') exanple2
-    option(data-id='1Jutg5AZOT-FoXI4mFTOmuR62o844cs5WkoCJz3SOdnk') exanple3
-    option(data-id='1iWzHsSAsfqZv9-lU6znec0yncCBC7zzgVbUo8LJGghQ') exanple4
+    each node in locals.exampleNodes
+      option(data-id=node.driveId) 
+        =node.title
 
   br
   span or link in an existing sheet 
@@ -26,5 +59,6 @@ block content
   button(id='create-node') Create a new node
   br
   span(id='notice')= notice
+  
   
   

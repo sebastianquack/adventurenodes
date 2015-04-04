@@ -3,26 +3,60 @@ var mongoose = require('mongoose')
 var adventureNode = mongoose.model('AdventureNode')
 var drive_controller = require('drive_controller')
 
-// look up existing nodes and send to client
-var updateNodeList = function(socket) {
-  adventureNode.find({}).sort({title: 1}).exec(function(err, adventure_nodes) {
-    socket.emit('update-node-list', adventure_nodes) 
-  })
-  
+// load published nodes
+var getPublicNodes = function(callback) {
+  adventureNode.find({published: true }).sort({title: 1}).exec(function(err, adventure_nodes) {
+    callback(adventure_nodes) 
+  })  
 }
 
-module.exports.init = function (io) {
+// load example nodes (specified here via list of title)
+var getExampleNodes = function(callback) {
+  var exampleTitles = ["example1", "example2", "example3", "example4", "example5"]
+  adventureNode.find({title: {$in: exampleTitles}}).sort({title: 1}).exec(function(err, adventure_nodes) {
+    callback(adventure_nodes) 
+  })    
+}
 
-    // client connects
-    io.sockets.on('connection', function (socket) {
-      
-      // send client current list of nodes on connect
-      updateNodeList(socket)
-            
-      // client has disconnected from socket
-      //socket.on('disconnect', function () {
-      //  console.log('disconnect')
-      //})
-    
+// load nodes with permission id
+var getNodesByOwner = function(ownerId, callback) {
+  adventureNode.find({ownerId: ownerId}).sort({title: 1}).exec(function(err, adventure_nodes) {
+    callback(adventure_nodes) 
+  })  
+}
+
+// load initial manage page
+var index = function(req, res) {
+  if(req.session.driveUserId) {
+    loadCreated(req.session.driveUserId, req, res)
+  } else {
+    loadExamplePublic(req, res)
+  }
+}
+
+var loadExamplePublic = function(req, res, createdNodes) {
+  getExampleNodes(function(exampleNodes) {
+    getPublicNodes(function(publicNodes) {
+      res.render('manage', {
+        title: 'Adventure Nodes', 
+        exampleNodes: exampleNodes,
+        publicNodes: publicNodes,
+        createdNodes: createdNodes
+      })        
     })
+  })
 }
+
+// load index page with created nodes
+var loadCreated = function(ownerId, req, res) {
+  req.session.driveUserId = ownerId
+  getNodesByOwner(ownerId, function(createdNodes) {
+    loadExamplePublic(req, res, createdNodes)
+  })
+}
+
+module.exports.index = index
+module.exports.loadCreated = loadCreated
+
+
+    

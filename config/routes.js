@@ -1,7 +1,7 @@
 var mongoose = require('mongoose')
 var express = require('express')
 var drive_controller = require('../app/controllers/drive_controller')
-
+var manage_controller = require('../app/controllers/manage_controller')
 //var auth = express.basicAuth('admin', process.env.admin_pw)
 
 /**
@@ -12,7 +12,12 @@ module.exports = function (app) {
 
   // render node management area
   app.get('/', function (req, res) { 
-    res.render('manage', {title: 'Adventure Nodes', node_title: 'title'})
+    manage_controller.index(req, res)
+  })
+
+  // send user to google to get info
+  app.get('/manage/load_created', function (req, res) {
+    drive_controller.authorize_about(req, res)
   })
 
   // send user to google to authenticate drive

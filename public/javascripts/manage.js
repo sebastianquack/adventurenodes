@@ -4,33 +4,23 @@ var ifrm = null
 /* let's go! */
 
 $(document).ready(function() {
-
-  // set up sockets
-  socket = io.connect(window.location.origin)
   
-  // update node list when notified by server
-  socket.on('update-node-list', function(data) { 
-    $('#adventure-nodes-list').html('')
-    data.forEach(function(entry) {
-      $('#adventure-nodes-list').append(
-        "<li>" + entry.title +
-        " <a href='/play/" + entry.title + "'>play</a> " +
-        " <a href='/embed/" + entry.title + "'>embed</a> " +
-        " <a target='_blank' href='" + entry.driveLink + "'>edit</a>" +
-        " <a class='remove-link' href='/manage/remove/"+ entry.driveId + "'>remove</a>"+
-        "</li>"
-      )
-    })
+  // reset url path
+  history.pushState(null, null, "")
     
-    $('a.remove-link').click(function(e) {
-      var r = confirm("This will permanently remove the node from the list but leave the google spreadsheet intact. Only works if you have access to the spreadsheet. Proceed?");
-      if (r == true) {
-          return true
-      } else {
-          e.preventDefault()
-      }
-    })
-
+  // load nodes created by user
+  $('#load-created-nodes').click(function() {
+    window.location = "/manage/load_created"
+  })
+    
+  // setup remove events in node list
+  $('a.remove-link').click(function(e) {
+    var r = confirm("This will permanently remove the node from the list but leave the google spreadsheet intact. Only works if you have access to the spreadsheet. Proceed?");
+    if (r == true) {
+        return true
+    } else {
+        e.preventDefault()
+    }
   })
 
   // make input field blank when first clicked

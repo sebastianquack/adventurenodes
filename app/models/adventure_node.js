@@ -12,6 +12,8 @@ var AdventureNodeSchema = new Schema({
   driveId: { type: String, default: '' },
   drivePermissionId: { type: String, default: '' },
   driveLink: { type: String, default: '' },
+  published: { type: Boolean, default: false },
+  ownerId: { type: String, default: '' }
 })
 
 /**
