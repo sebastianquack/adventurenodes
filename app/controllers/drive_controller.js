@@ -117,7 +117,9 @@ var get_user_info = function(req, res) {
         return
       }
       console.log(data.user.permissionId)
-      manage_controller.loadCreated(data.user.permissionId, req, res)
+      req.session.driveUserId = data.user.permissionId
+      res.redirect('/')
+      //manage_controller.loadCreated(data.user.permissionId, req, res)
     })
   })
 }

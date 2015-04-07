@@ -49,7 +49,6 @@ var loadExamplePublic = function(req, res, createdNodes) {
 
 // load index page with created nodes
 var loadCreated = function(ownerId, req, res) {
-  req.session.driveUserId = ownerId
   getNodesByOwner(ownerId, function(createdNodes) {
     loadExamplePublic(req, res, createdNodes)
   })

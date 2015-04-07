@@ -6,14 +6,6 @@ block content
   
   p An adventure node is like a chatroom with a text adventure game built into it. To jump into a node, just follow the "play" link on one of the nodes below. Watch out - adventure nodes can be interconnected! You never know where you end up. 
   
-  h3 Published Nodes
-  ul(id='public-nodes-list')
-    each node in locals.publicNodes
-      li
-        =node.title
-        | 
-        a(href="/play" + node.title) play
-  
   h3 Example Nodes
   p Here are a few example nodes that showcase different features of the Adventure Nodes platform.
   ul(id='example-nodes-list')
@@ -24,7 +16,15 @@ block content
         a(href="/play/" + node.title) play
         | 
         a(href=node.driveLink) view 
-
+  
+  h3 Published Nodes
+  ul(id='public-nodes-list')
+    each node in locals.publicNodes
+      li
+        =node.title
+        | 
+        a(href="/play" + node.title) play
+  
   h3 Your Nodes
   ul(id='created-nodes-list')
     if locals.createdNodes
@@ -40,8 +40,9 @@ block content
 
 
   button(id='load-created-nodes') Load nodes created by you
-  
-  p Create your own node! To get started, enter a title for your node and either start from scratch or base it on one of our examples. All your node's data is stored in google spreadsheets that you can edit alone or together with friends.
+
+  h3 Create a new node!
+  p To get started, enter a title for your node and either start from scratch or base it on one of our examples. All your node's data is stored in google spreadsheets that you can edit alone or together with friends.
 
   input(id='node-title', value='title') 
   br
