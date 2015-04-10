@@ -150,11 +150,9 @@ $(document).ready(function() {
   // check url to see if player is targeting specific node
   var target_node = null
   var path = window.location.pathname.split('/')
-  if(path.length > 2) {
-    if(path[path.length - 2] == 'play') {
+  if(path.length > 1) {
       target_node = path[path.length - 1]
       $('#node-title').html(target_node)
-    }
   }
   
   // send cookie to server for check 
@@ -392,7 +390,7 @@ $(document).ready(function() {
     
   // user clicks fullscreen button
   $('.fullscreen-toggle').click(function() {
-    var play_url = location.protocol + '//' + location.hostname + (location.port ? ':'+location.port : '') + '/play'
+    var play_url = location.protocol + '//' + location.hostname + (location.port ? ':'+location.port : '')
     if(target_node) {
       play_url += '/' + target_node
     } 

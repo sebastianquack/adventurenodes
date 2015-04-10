@@ -35,14 +35,34 @@ module.exports = function (app) {
     drive_controller.handle_callback(req, res)
   })
 
+  // get form for new node
+  app.get('/node/new', function (req, res) { 
+    manage_controller.get_new(req, res)
+  })
+
+  // create a new node
+  app.get('/node/create', function (req, res) { 
+    manage_controller.post_new(req, res)
+  })
+
+  // get node data
+  app.get('/node/:node_id', function (req, res) { 
+    manage_controller.get_node(req, res)
+  })
+
+  // update node data
+  app.post('/node/:node_id', function (req, res) { 
+    manage_controller.update_node(req, res)
+  })
+
   // render node management area
   app.get('/embed/:node_title', function (req, res) { 
     var node_title = req.params.node_title
-    res.render('manage/details', {node_title: node_title})
+    res.render('manage/embed', {node_title: node_title})
   })
 
   // play default node - intro?
-  app.get('/play', function (req, res) {
+  app.get('/:node_title', function (req, res) {
     res.render('play')
   })
 

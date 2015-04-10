@@ -37,6 +37,15 @@ var spreadsheetCache = {}
 
 /* functions */
 
+var getDriveId = function(driveLink) {
+  var re = /^https*:\/\/docs\.google\.com\/spreadsheets\/d\/(.*)\/edit/
+  if ((m = driveLink.match(re)) !== null) {
+    console.log(m)
+    return m[1]
+  }
+  return null
+}
+
 // request authorization to get info on user
 var authorize_about = function(req, res) {
   req.session.driveAction = "about"
@@ -44,30 +53,12 @@ var authorize_about = function(req, res) {
 }
 
 // respond to user create new node action, send user to google for authorization
-var authorize_create = function(req, res) {
-  
-  // normalize title
-  var title = req.query.title.trim().toLowerCase()
-  
-  // check if title contains illegal characters
-  if(!/^[a-z0-9]+$/i.test(title))  {
-    res.render('manage', {title: 'adventure nodes', node_title: title, notice: 'Please only use alphanumeric characters in your node title'})
-    return
-  }
-  
-  // check if node with that title exists
-  AdventureNode.findOne({ title: title }, function(err, node) {
-    if(err) return handleError(err)      
-    if(!node) {
-      req.session.driveAction = "create"
-      req.session.nodeBaseId = req.query.example_id
-      req.session.nodeSheetId = req.query.sheet_id
-      req.session.nodeTitle = title // save title in session for after auth
-      res.redirect(url) // request authorization from google
-    } else {
-      res.render('manage', {title: 'adventure nodes', node_title: title, notice: 'A node with that name already exists in the system. Please choose a different name!'})
-    }
-  })  
+var authorize_create = function(req, res, title) {
+    req.session.driveAction = "create"
+    req.session.nodeExampleId = req.query.exampleId
+    req.session.nodeDriveLink = req.query.driveLink
+    req.session.nodeTitle = title
+    res.redirect(url) // request authorization from google
 }
 
 // respond to user remove spreadsheet action, send user to google for authorization
@@ -127,7 +118,7 @@ var get_user_info = function(req, res) {
 // create new spreadsheet 
 var new_spreadsheet = function(req, res) {
   getAccessToken(req.query.code, function() {
-    upload(req.session.nodeBaseId, req.session.nodeSheetId, req.session.nodeTitle, function(ownerId) { // retrieve title
+    upload(req.session.nodeExampleId, req.session.nodeDriveLink, req.session.nodeTitle, function(ownerId) { 
       console.log("handing off to manage_controller " + ownerId)
       req.session.driveUserId = ownerId
       res.redirect('/')      
@@ -137,12 +128,12 @@ var new_spreadsheet = function(req, res) {
 }
 
 // creates a new spreadsheet on user's account, shares with service account
-var upload = function(baseId, sheetId, title, callback) {
-  // if sheetId is defined take an existing sheet
-  if(sheetId != 'undefined') {
-    console.log(sheetId)
+var upload = function(exampleId, driveLink, title, callback) {
+  // if driveLink is defined, use an existing sheet
+  if(driveLink) {
+    console.log(getDriveId(driveLink))
     drive.files.get({
-      fileId: sheetId,
+      fileId: getDriveId(driveLink),
       auth: auth
     }, function(err, data) {
       if(err) { 
@@ -154,10 +145,10 @@ var upload = function(baseId, sheetId, title, callback) {
       createNodeAndSetupPermissions(data, callback)       
     })
   } else
-  // if fileId is specified, copy spreadsheet to user drive
-  if(baseId != 'undefined') {
+  // if exampleId is specified, copy spreadsheet to user drive
+  if(exampleId) {
     drive.files.copy({
-       fileId: baseId,
+       fileId: exampleId,
        resource: { 
          title: title,
          parents: [{id: "root"}]

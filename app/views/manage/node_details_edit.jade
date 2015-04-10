@@ -1,0 +1,41 @@
+p
+  label title: 
+  input(class='node-title', value='#{locals.node.title}') 
+unless locals.create
+  p
+    label description: 
+    input(class='node-description', value='#{locals.node.description}') 
+  p
+    label author: 
+    input(class='node-author', value='#{locals.node.author}') 
+  p
+    label play mode: 
+    select(class='node-playMode')
+      each mode in locals.playModes
+        option(selected=mode == locals.node.playMode) 
+          =mode
+  p
+    label link color:
+    input(class='node-colors-links', value='#{locals.node.colors.links}') 
+    label border color:
+    input(class='node-colors-borders', value='#{locals.node.colors.borders}') 
+    label highlight color:
+    input(class='node-colors-highlights', value='#{locals.node.colors.highlights}')
+  p
+    label public: 
+    select(class='node-published')
+      option(selected=false == locals.node.published) False
+      option(selected=true == locals.node.published) True
+if locals.create
+  p
+    label based on an example: 
+    select(class='node-exampleId')
+      option(value="") empty node
+      each node in locals.exampleNodes
+        option(value=node.driveId) 
+          =node.title
+  p
+    label google drive link: 
+    input(class='node-driveLink', value='#{locals.node.driveLink}') 
+p
+  span(class='edit-notice')= locals.notice

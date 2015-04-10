@@ -1,0 +1,26 @@
+//p
+//  label title: 
+//  span(class='node-title')= locals.node.title
+p
+  label description: 
+  span(class='node-description')= locals.node.description
+p
+  label author: 
+  span(class='node-author')= locals.node.author
+p
+  label play mode: 
+  span(class='node-playmode')= locals.node.playMode
+p
+  label colors: 
+  span(style="color: #{locals.node.colors.links}") links 
+  span(style="color: #{locals.node.colors.borders}") borders 
+  span(style="color: #{locals.node.colors.highlights}") highlights 
+p
+  label published: 
+  span= locals.node.published
+p
+  label google drive link: 
+  a(href=locals.node.driveLink, target='_blank')= locals.node.driveLink
+if locals.notice
+  p
+    span(class='edit-notice')= locals.notice

@@ -13,9 +13,7 @@ block content
       li
         =node.title
         |  
-        a(href="/play/" + node.title) play
-        | 
-        a(href=node.driveLink) view 
+        a(href="/" + node.title) play
   
   h3 Published Nodes
   ul(id='public-nodes-list')
@@ -23,7 +21,7 @@ block content
       li
         =node.title
         | 
-        a(href="/play" + node.title) play
+        a(href="/" + node.title) play
   
   h3 Your Nodes
   ul(id='created-nodes-list')
@@ -32,34 +30,18 @@ block content
         li
           =node.title
           |  
-          a(href="/play/" + node.title) play
+          a(href="/" + node.title) play
           | 
-          a(href=node.driveLink) edit
-          | 
-          a(href="/manage/remove/" + node.id, class="remove-link") remove
-
+          a(href="#" class="open-details" data-id="#{node._id}") details
 
   button(id='load-created-nodes') Load nodes created by you
 
   h3 Create a new node!
   p To get started, enter a title for your node and either start from scratch or base it on one of our examples. All your node's data is stored in google spreadsheets that you can edit alone or together with friends.
 
-  input(id='node-title', value='title') 
-  br
-  span based on an example 
-  select(id='node-base')
-    option empty node
-    each node in locals.exampleNodes
-      option(data-id=node.driveId) 
-        =node.title
-
-  br
-  span or link in an existing sheet 
-    input(id='sheet-id', value='google spreadsheet id') 
-  br
   button(id='create-node') Create a new node
-  br
-  span(id='notice')= notice
-  
+  div(class='new-node')
+    if locals.node
+      include ./node_details_edit.jade
   
   

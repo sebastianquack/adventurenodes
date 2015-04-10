@@ -6,14 +6,20 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 
 var AdventureNodeSchema = new Schema({
-  title: { type: String, default: '' },
   subnodes: { type: Array, default: [] }, 
   variables: { type: Object, default: {}},  
   driveId: { type: String, default: '' },
   drivePermissionId: { type: String, default: '' },
-  driveLink: { type: String, default: '' },
+  ownerId: { type: String, default: '' },
+  
+  // this is directly user editable
+  driveLink: { type: String, default: '' },  
+  title: { type: String, default: '' },
+  description: { type: String, default: '' },
+  author: { type: String, default: '' },
   published: { type: Boolean, default: false },
-  ownerId: { type: String, default: '' }
+  playMode: { type: String, default: '' },
+  colors: { type: Object, default: {} },  
 })
 
 /**

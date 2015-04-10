@@ -13,3 +13,14 @@ h1 {
 #iframe_container {
 	margin-bottom: 2em;
 }
+
+a.disabled {
+  cursor: default;
+	text-decoration: none;
+	color: #666;
+	pointer-events: none;
+}
+
+.node-details, .node-edit {
+	margin-bottom: 20px;
+}

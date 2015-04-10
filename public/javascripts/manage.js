@@ -3,6 +3,116 @@ var socket
 var ifrm = null
 /* let's go! */
 
+var loadDetailView = function(target) {
+  closeDetailViews()
+  $('a.open-details').removeClass("disabled")
+  $(target).addClass("disabled")
+  node_id = $(target).data('id')
+  console.log(node_id)
+  $.get('/node/' + node_id, function(data) {
+    showDetailView($(target).parent(), data, node_id)
+  })
+}
+
+var closeDetailViews = function() {
+  $('div.node-details').remove()  
+  $('a.open-details').removeClass("disabled")
+}
+
+var showDetailView = function(target, data, id) {
+  var details = "<div class='node-details' data-id='"+id+"'>"
+  + data
+  + "<button class='open-edit' data-id='"+id+"' href='#'>edit</button> " 
+  + "<a class='close-details' href='#'>close</a>"
+  + "</div>"
+  $(target).append(details)
+  setupDetailEvents()
+}
+
+var loadEditView = function(target) {
+  node_id = $(target).data('id')
+  console.log(node_id)
+  $.get('/node/' + node_id + "?edit=1", function(data) {
+    showEditView($(target).parent().parent(), data, node_id)
+  })
+}
+
+var showEditView = function(target, data, id) {
+  $('div.node-details').hide()
+  var edit_form = "<div class='node-edit' data-id='"+id+"'>"
+  + data
+  + (id!="new"? "<p><a href='/manage/remove/"+id+"' class='remove-link'>remove node</a></p>" : "")
+  + "<button class='submit-edit'>submit</button> "
+  + "<button class='cancel-edit'>cancel</button>" 
+  + "</div>"
+  $(target).append(edit_form)
+  setupDetailEvents()
+}
+
+var closeEditView = function() {
+  $('div.node-edit').remove()  
+  $('div.node-details').show()  
+}
+
+var setupDetailEvents = function() {
+  
+  $('.close-details').off().click(function(e) {
+    e.preventDefault()
+    closeDetailViews()  
+  })
+  
+  $('.open-edit').off().click(function(e) {
+    e.preventDefault()
+    loadEditView(e.target)
+  })
+  
+  $('.cancel-edit').off().click(function(e) {
+    e.preventDefault()
+    $('.node-edit').removeClass("disabled")
+    closeEditView()
+  })
+  
+  // submit the form
+  $('.submit-edit').off().click(function(e) {
+    e.preventDefault()
+    var node_id = $(e.target).parent().data('id')
+    var body = {
+      title: $('input.node-title').val(),
+      description: $('input.node-description').val(),      
+      author: $('input.node-author').val(),
+      playMode: $('select.node-playMode').val(),
+      published: $('select.node-published').val(),
+      colors_links: $('input.node-colors-links').val(),
+      colors_borders: $('input.node-colors-borders').val(),
+      colors_highlights: $('input.node-colors-highlights').val(),
+      driveLink: $('input.node-driveLink').val(),
+      exampleId: $('select.node-exampleId').val()
+    }
+    
+    if(node_id == "new") {
+      window.location = "/node/create?" + $.param(body)
+    } else {    
+      $.post('/node/' + node_id, body, function(data) {
+        var container = $(e.target).parent().parent()
+        $('div.node-details').remove()
+        $('div.node-edit').remove()
+        showDetailView(container, data, node_id)
+      })
+    }
+  })
+  
+  // setup remove events in node list
+  $('a.remove-link').off().click(function(e) {
+    var r = confirm("This will permanently remove the node from the list but leave the google spreadsheet intact. Only works if you have access to the spreadsheet. Proceed?");
+    if (r == true) {
+        return true
+    } else {
+        e.preventDefault()
+    }
+  })
+  
+}
+
 $(document).ready(function() {
   
   // reset url path
@@ -13,16 +123,12 @@ $(document).ready(function() {
     window.location = "/manage/load_created"
   })
     
-  // setup remove events in node list
-  $('a.remove-link').click(function(e) {
-    var r = confirm("This will permanently remove the node from the list but leave the google spreadsheet intact. Only works if you have access to the spreadsheet. Proceed?");
-    if (r == true) {
-        return true
-    } else {
-        e.preventDefault()
-    }
+  // setup detail open events
+  $('a.open-details').click(function(e) {
+    e.preventDefault()
+    loadDetailView(e.target)
   })
-
+     
   // make input field blank when first clicked
   $('#node-title').click(function() {
     if($('#node-title').val() == 'title') {
@@ -39,21 +145,13 @@ $(document).ready(function() {
 
   // submit a new title to create a node
   $('#create-node').click(function() {
-    if($('#node-title').val() != 'title') {
-      var title = $('#node-title').val()
-    }
-    if($('#sheet-id').val() != 'google spreadsheet id') {
-      var sheet_id = $('#sheet-id').val()
-    }
+    $.get('/node/new/', function(data) {
+      showEditView($('.new-node'), data, "new")
+    })
     
-    if($('#node-title').val() != '' && $('#node-title').val() != 'title') {
-      window.location = "/manage/create?title=" + title 
-      + "&example_id=" + $('#node-base').find(':selected').data('id')
-      + "&sheet_id=" + sheet_id
-    }    
   })
 
-  /* manage details */
+  // embed functions
 
   $('#width').val(300) // default values
   $('#height').val(400) // default values
