@@ -133,7 +133,8 @@ header .show ul {
 #chat {
   overflow-y: scroll;
   overflow-wrap: break-word;
-  height: 97%;
+  height: 100%;
+  height: calc(100% - 7px);
   line-height: 1.3em;
   box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -143,6 +144,8 @@ header .show ul {
   margin-right:6px;
   position: absolute;
   top: 0;
+  width:99%;
+  width:calc(100% - 7px);
 }
 #chat p {
   padding-bottom: 0.7em;
