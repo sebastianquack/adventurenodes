@@ -231,8 +231,8 @@ var baseSetupSpreadsheet = function(spreadsheetId, callback) {
       	return
       }
       
-      spreadsheet.add({ 1: { 1: "input1", 2: "input2", 3: "output", 4: "condition", 5: "effect", 6: "exit" } });
-      spreadsheet.add({ 2: { 1: "base", 3: "hello, world!" } });
+      spreadsheet.add({ 1: { 1: "action", 2: "object", 3: "response" } });
+      spreadsheet.add({ 2: { 1: "", 3: "hello, world!" } });
 
       spreadsheet.send({ autoSize: true }, function(err) {
         if(err) {

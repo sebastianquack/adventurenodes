@@ -1,7 +1,5 @@
 var socket
-
 var ifrm = null
-/* let's go! */
 
 var loadDetailView = function(target) {
   closeDetailViews()
