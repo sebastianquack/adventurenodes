@@ -71,8 +71,10 @@ var authorize_remove = function(req, res) {
 
 // respond to google's callback
 var handle_callback = function(req, res) {
-  console.log("google callback with " + req.session.driveAction)
-  switch(req.session.driveAction) {
+  console.log("google callback")
+  //console.log(res)
+  console.log("req.session.driveAction = " + req.session.driveAction)
+  switch(res.req.session.driveAction) {
     case "about":
       get_user_info(req, res)
       break
@@ -148,10 +150,10 @@ var upload = function(exampleId, driveLink, title, callback) {
   // if exampleId is specified, copy spreadsheet to user drive
   if(exampleId) {
     drive.files.copy({
-       fileId: exampleId,
+       fileId: exampleId, // this is the original file id to be copied
        resource: { 
-         title: title,
-         parents: [{id: "root"}]
+         title: title, // this is how the copy of the file should be called
+         parents: [{id: "root"}] // this is where the copy of the file should be located
        },
        auth: auth
     }, function(err, data) {

@@ -3,7 +3,7 @@ var mongoose = require('mongoose')
 var adventureNode = mongoose.model('AdventureNode')
 var drive_controller = require('drive_controller')
 
-var exampleTitles = ["Example 1", "Example 2", "Example 3", "Example 4", "Example 5"]
+var exampleTitles = ["example1", "example2", "example3", "example4", "example5"]
 var playModes = ["Text Adventure", "Tabletop Roleplaying", "Collective Writing"]
 
 // load published nodes
@@ -121,7 +121,7 @@ var get_new = function(req, res) {
 var post_new = function(req, res) {
   
   // normalize title
-  var title = req.query.title = req.query.title.trim().toLowerCase()
+  var title = req.query.title = req.query.title.trim()
 
   var newNode = new adventureNode({})
   newNode.title = title

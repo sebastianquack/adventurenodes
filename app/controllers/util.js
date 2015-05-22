@@ -66,9 +66,9 @@ var getObject = function(input) {
 // parse world descriptions for links
 var linkify = function(text) {
 
-  text = text.replace(/(?!\<br\>)(\<(.*?)\>)/g,'<b data-command="$2"></b>') // parse links (except for <br>)
+  text = text.replace(/(?!\<br\>)(\<(.*?)\>)/g,'<b class="link-color" data-command="$2"></b>') // parse links (except for <br>)
     
-  text = text.replace(/\_(.*?)\_/g,'<span class="italic">$1</span>') // italic      
+  text = text.replace(/\_(.*?)\_/g,'<span class="highlight-color italic">$1</span>') // italic      
   text = text.replace(/\*(.*?)\*/g,'<span class="bold">$1</span>') // bold
   //text = text.replace(/\[(.*?)\]/g,'<b data-command="$1"></b>') // parse old links
     
@@ -115,6 +115,7 @@ var write = function(socket, player, emitter, value, mode, type, recipient) {
     player_state: (mode == "sender" || mode == "socket") ? player.state : null,
     sender_name: emitter.name,
     sender_uuid: emitter.uuid,
+    nodeColors: player.currentNode ? player.currentNode.colors : null,
     nodeLink: player.currentNode ? player.currentNode.driveLink : null,
     value: value, 
     type: type,

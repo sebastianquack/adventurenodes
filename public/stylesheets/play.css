@@ -21,7 +21,6 @@ body {
 #bottom-border,
 #left-border,
 #right-border {
-  background: #fdc81c;
   position: fixed;
   z-index: 2;
 }
@@ -49,6 +48,10 @@ body {
 #bottom-border {
   bottom: 0;
 }
+.border-color {
+	background: #fdc81c;
+}
+
 header {
   position: absolute;
   top: 0;
