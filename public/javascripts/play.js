@@ -299,9 +299,9 @@ $(document).ready(function() {
     $(this).parent().toggleClass('show');
   });
     
-  if(self==top) {
+  /*if(self==top) {
   	$(".fullscreen-toggle").hide()    
-  }
+  }*/
     
   // user clicks on menu
   $("body").on("click","*[data-menu]", null, function() { 

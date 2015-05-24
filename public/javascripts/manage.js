@@ -166,7 +166,7 @@ $(document).ready(function() {
     
     var path = window.location.pathname.split('/')
     if(path.length > 1) {
-      node_title = "/play/" + path[path.length - 1]
+      node_title = "/" + path[path.length - 1]
     } else {
       node_title = ""
     }
