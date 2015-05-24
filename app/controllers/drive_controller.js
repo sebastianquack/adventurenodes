@@ -48,24 +48,23 @@ var getDriveId = function(driveLink) {
 
 // request authorization to get info on user
 var authorize_about = function(req, res) {
-  req.session.driveAction = "about"
+  res.cookie('driveAction', 'about')
   res.redirect(url)
 }
 
 // respond to user create new node action, send user to google for authorization
 var authorize_create = function(req, res, title) {
-    req.session.driveAction = "create"
-    req.session.nodeExampleId = req.query.exampleId
-    req.session.nodeDriveLink = req.query.driveLink
-    req.session.nodeTitle = title
+    res.cookie('driveAction', 'create')
+    res.cookie('nodeExampleId', req.query.exampleId)
+    res.cookie('nodeDriveLink', req.query.driveLink)
+    res.cookie('nodeTitle', title)
     res.redirect(url) // request authorization from google
 }
 
 // respond to user remove spreadsheet action, send user to google for authorization
 var authorize_remove = function(req, res) {
-  req.session.driveAction = "remove"
-  req.session.driveId = req.params.id // save id in session for after auth
-  console.log("saving driveId in session " + req.session.driveId)
+  res.cookie('driveAction', 'remove')
+  res.cookie('driveId', req.params.id) // save id in session for after auth
   res.redirect(url)
 }
 
@@ -73,8 +72,8 @@ var authorize_remove = function(req, res) {
 var handle_callback = function(req, res) {
   console.log("google callback")
   //console.log(res)
-  console.log("req.session.driveAction = " + req.session.driveAction)
-  switch(res.req.session.driveAction) {
+  console.log("req.cookies.driveAction = " + req.cookies.driveAction)
+  switch(req.cookies.driveAction) {
     case "about":
       get_user_info(req, res)
       break
@@ -110,7 +109,7 @@ var get_user_info = function(req, res) {
         return
       }
       console.log(data.user.permissionId)
-      req.session.driveUserId = data.user.permissionId
+      res.cookie('driveUserId', data.user.permissionId)
       res.redirect('/')
       //manage_controller.loadCreated(data.user.permissionId, req, res)
     })
@@ -120,9 +119,9 @@ var get_user_info = function(req, res) {
 // create new spreadsheet 
 var new_spreadsheet = function(req, res) {
   getAccessToken(req.query.code, function() {
-    upload(req.session.nodeExampleId, req.session.nodeDriveLink, req.session.nodeTitle, function(ownerId) { 
+    upload(req.cookies.nodeExampleId, req.cookies.nodeDriveLink, req.cookies.nodeTitle, function(ownerId) { 
       console.log("handing off to manage_controller " + ownerId)
-      req.session.driveUserId = ownerId
+      res.cookie('driveUserId', ownerId)
       res.redirect('/')      
       //manage_controller.loadCreated(ownerId, req, res)
     })
@@ -249,7 +248,7 @@ var baseSetupSpreadsheet = function(spreadsheetId, callback) {
 var remove_spreadsheet = function(req, res) {
   console.log("requesting access token...")
   getAccessToken(req.query.code, function() {
-    remove(req.session.driveId, function() {
+    remove(req.cookies.driveId, function() {
       res.redirect('/')      
     })
   })

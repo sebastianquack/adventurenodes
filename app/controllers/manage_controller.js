@@ -29,8 +29,8 @@ var getNodesByOwner = function(ownerId, callback) {
 
 // load initial manage page
 var index = function(req, res, newNode, notice) {
-  if(req.session.driveUserId) {
-    loadCreated(req.session.driveUserId, req, res, newNode, notice)
+  if(req.cookies.driveUserId) {
+    loadCreated(req.cookies.driveUserId, req, res, newNode, notice)
   } else {
     loadExamplePublic(req, res, null, newNode, notice)
   }

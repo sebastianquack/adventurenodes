@@ -82,7 +82,7 @@ var setupDetailEvents = function() {
       published: $('select.node-published').val(),
       colors_links: $('input.node-colors-links').val(),
       colors_borders: $('input.node-colors-borders').val(),
-      colors_highlights: $('input.node-colors-highlights').val(),
+      //colors_highlights: $('input.node-colors-highlights').val(),
       driveLink: $('input.node-driveLink').val(),
       exampleId: $('select.node-exampleId').val()
     }
