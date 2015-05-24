@@ -19,7 +19,7 @@ var AdventureNodeSchema = new Schema({
   author: { type: String, default: '' },
   published: { type: Boolean, default: false },
   playMode: { type: String, default: '' },
-  colors: { type: Object, default: {} },  
+  colors: { type: Object, default: { borders: '#7c79d2', links: '#d7d6dc' } },  
 })
 
 /**

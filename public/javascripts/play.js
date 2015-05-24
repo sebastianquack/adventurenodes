@@ -176,10 +176,11 @@ $(document).ready(function() {
       $('#action-log-container').show()
 
       if(data.nodeColors) {
+        console.log(data.nodeColors)
         $(".border-color").css("background-color", data.nodeColors.borders)        
         $('<style>#chat section b[data-command]:after, #input[data-state=world].chars #input-fake, #input[data-state=world].chars #input-command, #input[data-state=jump].chars #input-fake, #input[data-state=jump].chars #input-command, #input[data-state=menu].chars #input-fake, #input[data-state=menu].chars #input-command, .link-color:after { background-color:'+data.nodeColors.links+' !important}</style>').appendTo('head')        
         $('nav button').css("background-color", data.nodeColors.borders)
-        $('<style> p[data-sender]:not([data-state=world]):not([data-state=jump]):not([data-state=menu]):before { color: ' + data.nodeColors.links + ' !important}</style>').appendTo('head')
+        $('<style> p[data-sender]:not([data-state=world]):not([data-state=jump]):not([data-state=menu]):before { color: ' + data.nodeColors.borders + ' !important}</style>').appendTo('head')
         $('ul.border-color li b, ul.border-color li a').css("background-color", data.nodeColors.links)
       }    
     }

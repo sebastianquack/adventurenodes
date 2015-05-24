@@ -49,7 +49,7 @@ body {
   bottom: 0;
 }
 .border-color {
-	background: #000;
+	background: #777;
 }
 
 header {
@@ -78,17 +78,17 @@ header button {
   cursor: pointer;
   background: #555;
   background-image: none;
-  border: 1px solid #222222;
+  border: 1px solid #111;
 }
 header button.help-btn {
-   background: #222222 url("../images/help_button.png") no-repeat;
+   background: #777 url("../images/help_button.png") no-repeat;
 	 right: 36px;
 }
 header button.fullscreen-toggle {
-	background: #222222 url("../images/fullscreen_button.png") no-repeat;
+	background: #777 url("../images/fullscreen_button.png") no-repeat;
 }
 header button.navbar-toggle {
-  background: #222222 url("../images/nav_button.png") no-repeat;
+  background: #777 url("../images/nav_button.png") no-repeat;
 }
 header button:hover {
   /*background: #060606;
@@ -120,7 +120,7 @@ header ul li {
 header ul li b, header ul li a {
   display: block;
   padding: .4em .8em;
-  background: #555;
+  background: #bbb;
   color: #060606;
   text-decoration: none;
   text-transform: uppercase;
@@ -173,7 +173,7 @@ header .show ul {
 }
 p[data-sender]:not([data-state=world]):not([data-state=jump]):not([data-state=menu]):before {
   content: attr(data-sender) ": ";
-  color: #555;
+  color: #777;
   font-style: italic;
   text-transform: capitalize;
 }
@@ -208,7 +208,7 @@ b[data-command] {
   line-height: 1.2em;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  background: #555;
+  background: #bbb;
   padding: 0.2em 0.5em;
 }
 

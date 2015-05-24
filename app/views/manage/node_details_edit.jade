@@ -15,10 +15,10 @@ unless locals.create
         option(selected=mode == locals.node.playMode) 
           =mode
   p
-    label link color:
-    input(type='color' class='node-colors-links', value='#{locals.node.colors.links}') 
     label border color:
     input(type='color' class='node-colors-borders', value='#{locals.node.colors.borders}') 
+    label link color:
+    input(type='color' class='node-colors-links', value='#{locals.node.colors.links}') 
   p
     label public: 
     select(class='node-published')
