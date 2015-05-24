@@ -403,7 +403,7 @@ $(document).ready(function() {
     if(target_node) {
       play_url += '/' + target_node
     } 
-    window.open(play_url)
+    window.location = play_url
   })
 
   // user clicks embed link
