@@ -12,12 +12,13 @@ block content
           if node.author
             | by 
             span(class="node-author")=node.author
+            | 
           a(class="button-link", style="border-color: "+ node.colors.borders+"; background-color: " + node.colors.links, href="/" + node.title) play
         div(class="description")=node.description
   
   p Each Adventure Node is like a chatroom with a text adventure game built into it. To jump into a node, just click "play" on one of the nodes above. Watch out - even though they are written by different people, nodes can be interconnected! You never know where you end up. 
   
-  h3 Your Nodes
+  h3 Your nodes
   ul(id='created-nodes-list')
     if locals.createdNodes
       each node in locals.createdNodes
