@@ -210,6 +210,7 @@ var check_user_permission = function(driveUserId, driveLink, callback) {
     }, function(err, data) {
     if(err) {
       console.log(err)
+      callback(false)
       return
     }
     //console.log(data)
