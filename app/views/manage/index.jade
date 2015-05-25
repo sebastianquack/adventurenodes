@@ -16,7 +16,7 @@ block content
           if node.author
             | by 
             span(class="node-author")=node.author
-          a(class="button-link", style="background-color: " + node.colors.links, href="/" + node.title) play
+          a(class="button-link", style="border-color: "+ node.colors.borders+"; background-color: " + node.colors.links, href="/" + node.title) play
         div(class="description")=node.description
   
   h3 Your Nodes
@@ -27,7 +27,7 @@ block content
           h4
             span(class="node-title")=node.title 
             | 
-            a(class="button-link", style="background-color: " + node.colors.links, href="/" + node.title) play
+            a(class="button-link", style="border-color: "+ node.colors.borders+"; background-color: " + node.colors.links, href="/" + node.title) play
           a(href="#" class="open-details" data-id="#{node._id}") details
 
   button(id='load-created-nodes') Refresh list
@@ -48,7 +48,7 @@ block content
         h4
           span(class="node-title")=node.title 
           | 
-          a(class="button-link", style="background-color: " + node.colors.links, href="/" + node.title) play
+          a(class="button-link", style="border-color: "+ node.colors.borders+"; background-color: " + node.colors.links, href="/" + node.title) play
         div(class="description")=node.description
         a(href=node.driveLink) see spreadsheet
 
