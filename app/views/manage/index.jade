@@ -5,19 +5,7 @@ block content
   h2 A platform for collaborative storytelling and shared exploration
   
   p An adventure node is like a chatroom with a text adventure game built into it. To jump into a node, just follow the "play" link on one of the nodes below. Watch out - adventure nodes can be interconnected! You never know where you end up. 
-  
-  h3 Example Nodes
-  p Here are a few example nodes that showcase different features of the Adventure Nodes platform.
-  ul(id='example-nodes-list')
-    each node in locals.exampleNodes
-      li
-        h4
-          span(class="node-title")=node.title 
-          | 
-          a(class="button-link", style="background-color: " + node.colors.links, href="/" + node.title) play
-        div(class="description")=node.description
-        a(href=node.driveLink) see spreadsheet
-  
+    
   h3 Published Nodes
   ul(id='public-nodes-list')
     each node in locals.publicNodes
@@ -52,5 +40,15 @@ block content
   div(class='new-node')
     if locals.node
       include ./node_details_edit.jade
-  
-  
+      
+  p Here are a few example nodes that showcase different features of the Adventure Nodes platform.
+  ul(id='example-nodes-list')
+    each node in locals.exampleNodes
+      li
+        h4
+          span(class="node-title")=node.title 
+          | 
+          a(class="button-link", style="background-color: " + node.colors.links, href="/" + node.title) play
+        div(class="description")=node.description
+        a(href=node.driveLink) see spreadsheet
+
