@@ -35,9 +35,14 @@ var getNodesByOwner = function(ownerId, callback) {
     permissions.forEach(function(permission) {
       adventure_nodes.push(permission.node)
     })
-    // todo: sort
+    // sort
+    function compare(a, b) {
+      if (a.title < b.title) return -1
+      if (a.title > b.title) return 1
+      return 0
+    }
+    adventure_nodes.sort(compare)
     callback(adventure_nodes) 
-    
   })
     
 }
