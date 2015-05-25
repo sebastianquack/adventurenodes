@@ -12,8 +12,9 @@ block content
       li
         h4
           span(class="node-title")=node.title 
+          | 
           if node.author
-            |  by 
+            | by 
             span(class="node-author")=node.author
           a(class="button-link", style="background-color: " + node.colors.links, href="/" + node.title) play
         div(class="description")=node.description
