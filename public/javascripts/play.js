@@ -184,8 +184,10 @@ $(document).ready(function() {
         $('ul.border-color li b, ul.border-color li a').css("background-color", data.nodeColors.links)
       }    
     }
+      
+    console.log(data)
   
-    if (data.player_room != null && player.currentRoom != data.player_room) { // player entered a room
+    if (data.player_room != null && player.currentRoom != data.player_room || data.type == "restart") { // player entered a room
       clearChat()
       $('#chat').append($('<section>'))
       var subnode = ""
@@ -207,23 +209,25 @@ $(document).ready(function() {
     data.value = data.value.replace("\\time", dateString)
     
     if(data.value.indexOf("\clear") != -1) {
-      data.value = data.value.replace("\\clear", "")
+      data.value = data.value.replace("\clear", "")
       clearChat()
     }
     
-    // add text
-    if(data.sender_name == "System") {
-      newElem = $('<p>' + data.value + '</p>')
-    } else {
-      console.log(data)
-      if(data.sender_uuid == $.cookie('an_uuid')) 
-        newElem = $('<p data-sender="You">' + data.value + '</p>')
-      else
-        newElem = $('<p data-sender="'+data.sender_name+'">' + data.value + '</p>')
+    if(data.type != "restart") {
+      // add text
+      if(data.sender_name == "System") {
+        newElem = $('<p>' + data.value + '</p>')
+      } else {
+        console.log(data)
+        if(data.sender_uuid == $.cookie('an_uuid')) 
+          newElem = $('<p data-sender="You">' + data.value + '</p>')
+        else
+          newElem = $('<p data-sender="'+data.sender_name+'">' + data.value + '</p>')
+      }
+      if (data.type != undefined) newElem = newElem.addClass(data.type)
+      newElem = newElem.addClass("incoming")
+      newElem = $('#chat section:last-child').append(newElem)
     }
-    if (data.type != undefined) newElem = newElem.addClass(data.type)
-    newElem = newElem.addClass("incoming")
-    newElem = $('#chat section:last-child').append(newElem)
 
     // move input field to bottom and update data
     $('#chat section:last-child').append($("#input").detach())

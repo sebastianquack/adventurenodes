@@ -71,7 +71,7 @@ var authorize_remove = function(req, res) {
 // respond to google's callback
 var handle_callback = function(req, res) {
   console.log("google callback")
-  //console.log(res)
+  //console.log(req)
   console.log("req.cookies.driveAction = " + req.cookies.driveAction)
   switch(req.cookies.driveAction) {
     case "about":

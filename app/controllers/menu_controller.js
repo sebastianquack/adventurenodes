@@ -19,7 +19,7 @@ var handleInput = function(socket, player, input) {
       player.inMenu = false
       player.state = "world"
       player.save()
-      Util.write(socket, player, {name: "System"}, "", "sender", "chapter")
+      Util.write(socket, player, {name: "System"}, "", "sender", "restart")
       World.enterRoom(player, player.currentRoom.split("/")[0], socket)
       break
 
