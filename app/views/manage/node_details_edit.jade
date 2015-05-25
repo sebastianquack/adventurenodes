@@ -28,7 +28,7 @@ unless (locals.create || locals.link)
       option(selected=true == locals.node.published, value="True") Yes
 if locals.create
   p
-    label based on an example: 
+    label based on 
     select(class='node-exampleId')
       option(value="") empty node
       each node in locals.exampleNodes
@@ -36,7 +36,7 @@ if locals.create
           =node.title
 if locals.link
   p
-    label google drive link: 
+    label google drive link 
     input(class='node-driveLink', value='#{locals.node.driveLink}') 
 p
   span(class='edit-notice')= locals.notice
