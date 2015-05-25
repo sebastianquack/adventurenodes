@@ -75,7 +75,6 @@ updateInput = function() {
   else $('#input').removeClass('chars')
 }
 
-
 // fast scroll to input
 var fastScroll = false
 scrollInput = function() {
@@ -287,14 +286,12 @@ $(document).ready(function() {
         $('#input-command').focus()
       }
     })
-  } else {
+  } else { // touch device
     $('#input').on("click", function(event){
       $('#input-command').focus()
       setInterval(scrollInput, 500) // add delay while software keyboard opens on touch devices
     })
   }
-
-  $('#input-command').on("keypress keyup keydown", updateInput)
   
   // toggle navigation
   $('.navbar-toggle').click( function(){
@@ -319,13 +316,6 @@ $(document).ready(function() {
   $("body").on("click","b[data-command]", null, function() { 
     scrollInput()
     autoType($(this).data("command"))
-  })
-
-  // user hits enter in console
-  $('#input-command').on("keypress", function(e) {
-    if (e.keyCode == 13) {       
-      submitCommand()
-    }
   })
   
   // user opens logs
@@ -428,7 +418,17 @@ $(document).ready(function() {
     window.location = manage_url
   })
 
-  /* cursor effects */
+  /* keyboard input and cursor effects */
+
+  // catch keyboard input
+  $('#input-command').on("keypress keyup keydown", updateInput)
+
+  // user hits enter in console
+  $('#input-command').on("keypress", function(e) {
+    if (e.keyCode == 13) {       
+      submitCommand()
+    }
+  })
 
   // blink cursor
   setInterval(function(){ $("#cursor").toggleClass("inverted")}, 650);

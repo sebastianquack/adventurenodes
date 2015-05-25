@@ -141,7 +141,7 @@ header .show ul {
   transform: translate(0, 0);
 }
 #chat {
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-wrap: break-word;
   height: 100%;
   height: calc(100% - 7px);
