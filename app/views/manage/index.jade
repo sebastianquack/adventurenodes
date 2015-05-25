@@ -12,9 +12,9 @@ block content
       li
         h4
           span(class="node-title")=node.title 
-          |  by 
-          span(class="node-author")=node.author
-          | 
+          if node.author
+            |  by 
+            span(class="node-author")=node.author
           a(class="button-link", style="background-color: " + node.colors.links, href="/" + node.title) play
         div(class="description")=node.description
         //a(href=node.driveLink) see spreadsheet
