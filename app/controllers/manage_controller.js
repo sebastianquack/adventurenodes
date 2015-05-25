@@ -1,6 +1,8 @@
 var Util = require('./util.js')
 var mongoose = require('mongoose')
 var adventureNode = mongoose.model('AdventureNode')
+var nodePermission = mongoose.model('NodePermission')
+
 var drive_controller = require('drive_controller')
 
 var exampleTitles = ["example1", "example2", "example3", "example4", "example5"]
@@ -22,9 +24,75 @@ var getExampleNodes = function(callback) {
 
 // load nodes with permission id
 var getNodesByOwner = function(ownerId, callback) {
-  adventureNode.find({ownerId: ownerId}).sort({title: 1}).exec(function(err, adventure_nodes) {
+    
+  nodePermission.find({permissionId: ownerId}).populate('node').exec(function(err, permissions) {
+    if(err) {
+      console.log(err)
+      return
+    }
+    
+    var adventure_nodes = []
+    permissions.forEach(function(permission) {
+      adventure_nodes.push(permission.node)
+    })
+    // todo: sort
     callback(adventure_nodes) 
-  })  
+    
+  })
+    
+}
+
+// refresh user permissions for a given user
+var refresh_user_permissions = function(driveUserId, callback) {
+
+  adventureNode.find({}).sort({title: 1}).exec(function(err, adventure_nodes) {    
+    if(err) {
+      console.log(err)
+      callback()
+    }
+    // set up a callback that only calls back when all nodes have been processed
+    var counter = 0
+    var test_callback = function() {
+      if(++counter == adventure_nodes.length) {
+        callback()
+      }
+    }
+    
+    adventure_nodes.forEach(function(node) {
+      // ask google if this owner has access to this file
+      drive_controller.check_user_permission(driveUserId, node.driveLink, function(access) {
+        
+        console.log("access: ", access)
+        
+        // look up if permission already exists
+        nodePermission.findOne({permissionId: driveUserId, driveLink: node.driveLink}, function(err, permission) {
+          if(err) {
+            console.log(err)
+            return
+          }
+          
+          console.log("permission: ", permission)
+
+          if(access && !permission ) {
+            // create permission
+            var new_permission = new nodePermission({
+              permissionId: driveUserId,
+              driveLink: node.driveLink,
+              node: node._id
+            })
+            new_permission.save(test_callback)
+          }
+          
+          if(!access && permission) {
+            // remove permission
+            permission.remove(test_callback)
+          }
+          
+          test_callback()
+        })
+      })
+    })
+  })    
 }
 
 // load initial manage page
@@ -52,7 +120,7 @@ var loadExamplePublic = function(req, res, createdNodes, newNode, notice) {
   })
 }
 
-// load index page with created nodes
+// load index page with created nodes and examples
 var loadCreated = function(ownerId, req, res, newNode, notice) {
   getNodesByOwner(ownerId, function(createdNodes) {
     loadExamplePublic(req, res, createdNodes, newNode, notice)
@@ -120,9 +188,7 @@ var get_new = function(req, res) {
 // link an existing spreadsheet to a new node (ajax)
 var get_link = function(req, res) {
   var node = new adventureNode({})
-  getExampleNodes(function(exampleNodes) {
-    res.render('manage/node_details_edit', {node: node, link: true})
-  })
+  res.render('manage/node_details_edit', {node: node, link: true})
 }
 
 // create a new node
@@ -159,6 +225,6 @@ module.exports.post_new = post_new
 module.exports.get_node = get_node
 module.exports.update_node = update_node
 module.exports.loadCreated = loadCreated
-
+module.exports.refresh_user_permissions = refresh_user_permissions
 
     

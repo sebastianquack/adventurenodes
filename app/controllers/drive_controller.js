@@ -5,7 +5,7 @@ var AdventureNode = mongoose.model('AdventureNode')
 var google = require('googleapis')
 var Util = require('./util.js')
 var manage_controller = require('manage_controller')
-
+var nodePermission = mongoose.model('NodePermission')
 
 /* variables */
 
@@ -54,11 +54,35 @@ var authorize_about = function(req, res) {
 
 // respond to user create new node action, send user to google for authorization
 var authorize_create = function(req, res, title) {
+  
+  var callGoogle = function() {
     res.cookie('driveAction', 'create')
     res.cookie('nodeExampleId', req.query.exampleId)
     res.cookie('nodeDriveLink', req.query.driveLink)
     res.cookie('nodeTitle', title)
     res.redirect(url) // request authorization from google
+  }
+  
+  if(req.query.driveLink) {
+    
+    // if linking in, check if node for this file already exists
+    AdventureNode.findOne({driveId: getDriveId(req.query.driveLink)}, function(err, node) {
+      if(err) {
+        console.log(err)
+        return
+      }          
+      if(!node) {
+        callGoogle()
+      } else {  
+        console.log("spreadsheet already in system")
+        manage_controller.index(req, res, null, "This spreadsheet already exists in system.")
+      }
+    })
+    
+  } else {
+    callGoogle()
+  }
+  
 }
 
 // respond to user remove spreadsheet action, send user to google for authorization
@@ -108,12 +132,32 @@ var get_user_info = function(req, res) {
         res.redirect('/')      
         return
       }
-      console.log(data.user.permissionId)
       res.cookie('driveUserId', data.user.permissionId)
-      res.redirect('/')
-      //manage_controller.loadCreated(data.user.permissionId, req, res)
+      console.log("identified user " + data.user.permissionId + ", refreshing permissions...")
+      
+      // refresh this users permissions, then redirect
+      manage_controller.refresh_user_permissions(data.user.permissionId, function() {
+        res.redirect('/')
+      })
+      
     })
   })
+}
+
+var check_user_permission = function(driveUserId, driveLink, callback) {
+  console.log("checking permissions for user " + driveUserId + " on " + driveLink)
+  drive.permissions.get({
+      fileId: getDriveId(driveLink),
+      permissionId: driveUserId,
+      auth: auth
+    }, function(err, data) {
+    if(err) {
+      console.log(err)
+      return
+    }
+    console.log(data)
+    callback(data.role == 'owner' || data.role == 'writer') // return true if user has at least write access
+  })  
 }
 
 // create new spreadsheet 
@@ -123,7 +167,7 @@ var new_spreadsheet = function(req, res) {
       console.log("handing off to manage_controller " + ownerId)
       res.cookie('driveUserId', ownerId)
       res.redirect('/')      
-      //manage_controller.loadCreated(ownerId, req, res)
+      //manage_controller.loadCreated(ownerId, req, res) // this is done automatically after reload
     })
   })
 }
@@ -192,29 +236,40 @@ var createNodeAndSetupPermissions = function(data, callback) {
     title: data.title,
     ownerId: ownerId
   }) 
-  new_adventure_node.save()
-  console.log(new_adventure_node)
-  
-  // add permission to service account for accessing the spreadsheet
-  drive.permissions.insert({
-    fileId: new_adventure_node.driveId,
-    sendNotificationEmails: false,
-    resource: {
-      role: "writer",
-      type: "user",
-      value: "7163825488-co5a1u10nfuscftajim053e9ht6kpkqi@developer.gserviceaccount.com" 
-    },
-    auth: auth
-  }, function(err, permission_data) {
-    if(err) {
-      console.log(err)
-      callback()
-      return
-    }
-    //console.log(permission_data)
-    new_adventure_node.drivePermissionId = permission_data.id
-    new_adventure_node.save()
-    callback(ownerId)
+  new_adventure_node.save(function() {
+    console.log(new_adventure_node)
+    
+    // save local permission
+    var new_permission = new nodePermission({
+      permissionId: data.id,
+      driveLink: data.alternateLink,
+      node: new_adventure_node._id
+    })
+    new_permission.save(function() {
+      console.log(new_permission)      
+    })    
+
+    // add google permission to service account for accessing the spreadsheet
+    drive.permissions.insert({
+      fileId: new_adventure_node.driveId,
+      sendNotificationEmails: false,
+      resource: {
+        role: "writer",
+        type: "user",
+        value: "7163825488-co5a1u10nfuscftajim053e9ht6kpkqi@developer.gserviceaccount.com" 
+      },
+      auth: auth
+    }, function(err, permission_data) {
+      if(err) {
+        console.log(err)
+        callback()
+        return
+      }
+      //console.log(permission_data)
+      new_adventure_node.drivePermissionId = permission_data.id
+      new_adventure_node.save()
+      callback(ownerId)
+    })
   })
 }
 
@@ -442,4 +497,4 @@ module.exports.handle_callback = handle_callback
 module.exports.dumpSpreadsheetFromId = dumpSpreadsheetFromId
 module.exports.loadRoom = loadRoom
 module.exports.clearCache = clearCache
-
+module.exports.check_user_permission = check_user_permission
