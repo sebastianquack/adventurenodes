@@ -1,6 +1,7 @@
-p
-  label title: 
-  input(class='node-title', value='#{locals.node.title}') 
+if locals.create
+  p
+    label title: 
+    input(class='node-title', value='#{locals.node.title}') 
 unless locals.create
   p
     label description: 
