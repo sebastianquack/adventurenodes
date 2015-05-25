@@ -6,6 +6,7 @@ var google = require('googleapis')
 var Util = require('./util.js')
 var manage_controller = require('manage_controller')
 var nodePermission = mongoose.model('NodePermission')
+var adventureNode = mongoose.model('AdventureNode')
 
 /* variables */
 
@@ -40,7 +41,7 @@ var spreadsheetCache = {}
 var getDriveId = function(driveLink) {
   var re = /^https*:\/\/docs\.google\.com\/spreadsheets\/d\/(.*)\/edit/
   if ((m = driveLink.match(re)) !== null) {
-    console.log(m)
+    //console.log(m)
     return m[1]
   }
   return null
@@ -136,12 +137,68 @@ var get_user_info = function(req, res) {
       console.log("identified user " + data.user.permissionId + ", refreshing permissions...")
       
       // refresh this users permissions, then redirect
-      manage_controller.refresh_user_permissions(data.user.permissionId, function() {
+      refresh_user_permissions(data.user.permissionId, function() {
         res.redirect('/')
       })
       
     })
   })
+}
+
+// refresh user permissions for a given user
+var refresh_user_permissions = function(driveUserId, callback) {
+
+  // load all adventure nodes
+  adventureNode.find({}).exec(function(err, adventure_nodes) {    
+    if(err) {
+      console.log(err)
+      callback()
+    }
+    // set up a callback that only calls back when all nodes have been processed
+    var counter = 0
+    var test_callback = function() {
+      if(++counter >= adventure_nodes.length) {
+        callback()
+      }
+    }
+    
+    
+    adventure_nodes.forEach(function(node) {
+      // ask google if this owner has access to this file
+      check_user_permission(driveUserId, node.driveLink, function(access) {
+        
+        console.log("access: ", access)
+        
+        // look up if permission already exists
+        nodePermission.findOne({permissionId: driveUserId, driveLink: node.driveLink}, function(err, permission) {
+          if(err) {
+            console.log(err)
+            return
+          }
+          
+          console.log("permission: ", permission)
+
+          if(access && !permission ) {
+            // create permission
+            var new_permission = new nodePermission({
+              permissionId: driveUserId,
+              driveLink: node.driveLink,
+              node: node._id
+            })
+            new_permission.save(test_callback)
+          }
+          
+          if(!access && permission) {
+            // remove permission
+            permission.remove(test_callback)
+          }
+          
+          test_callback()
+        })
+      })
+    })
+    
+  })    
 }
 
 var check_user_permission = function(driveUserId, driveLink, callback) {
@@ -155,7 +212,7 @@ var check_user_permission = function(driveUserId, driveLink, callback) {
       console.log(err)
       return
     }
-    console.log(data)
+    //console.log(data)
     callback(data.role == 'owner' || data.role == 'writer') // return true if user has at least write access
   })  
 }
