@@ -184,9 +184,7 @@ $(document).ready(function() {
         $('ul.border-color li b, ul.border-color li a').css("background-color", data.nodeColors.links)
       }    
     }
-      
-    console.log(data)
-  
+        
     if (data.player_room != null && player.currentRoom != data.player_room || data.type == "restart") { // player entered a room
       clearChat()
       $('#chat').append($('<section>'))
@@ -233,7 +231,7 @@ $(document).ready(function() {
     $('#chat section:last-child').append($("#input").detach())
     $("#input").attr("data-sender", player.name)
     $("#input").attr("data-state", player.state)
-    $("#input-command").focus()
+    //$("#input-command").focus()
     updateInput()
     
     // scroll up to fit new item
