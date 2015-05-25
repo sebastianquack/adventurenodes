@@ -117,6 +117,14 @@ var get_new = function(req, res) {
   })
 }
 
+// link an existing spreadsheet to a new node (ajax)
+var get_link = function(req, res) {
+  var node = new adventureNode({})
+  getExampleNodes(function(exampleNodes) {
+    res.render('manage/node_details_edit', {node: node, link: true})
+  })
+}
+
 // create a new node
 var post_new = function(req, res) {
   
@@ -146,6 +154,7 @@ var post_new = function(req, res) {
 
 module.exports.index = index
 module.exports.get_new = get_new
+module.exports.get_link = get_link
 module.exports.post_new = post_new
 module.exports.get_node = get_node
 module.exports.update_node = update_node

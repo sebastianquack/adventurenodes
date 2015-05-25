@@ -1,30 +1,31 @@
-if locals.create
+if locals.create || locals.link
   p
-    label title: 
+    label title 
     input(class='node-title', value='#{locals.node.title}') 
-unless locals.create
+unless (locals.create || locals.link)
   p
-    label description: 
-    input(class='node-description', value='#{locals.node.description}') 
-  p
-    label author: 
+    label by 
     input(class='node-author', value='#{locals.node.author}') 
   p
-    label play mode: 
+    label description 
+    input(class='node-description', value='#{locals.node.description}') 
+  p
+    label play mode 
     select(class='node-playMode')
       each mode in locals.playModes
         option(selected=mode == locals.node.playMode) 
           =mode
   p
-    label border color:
+    label border color 
     input(type='color' class='node-colors-borders', value='#{locals.node.colors.borders}') 
-    label link color:
+    | 
+    label link color 
     input(type='color' class='node-colors-links', value='#{locals.node.colors.links}') 
   p
-    label public: 
+    label publicly listed 
     select(class='node-published')
-      option(selected=false == locals.node.published) False
-      option(selected=true == locals.node.published) True
+      option(selected=false == locals.node.published, value="False") No
+      option(selected=true == locals.node.published, value="True") Yes
 if locals.create
   p
     label based on an example: 
@@ -33,6 +34,7 @@ if locals.create
       each node in locals.exampleNodes
         option(value=node.driveId) 
           =node.title
+if locals.link
   p
     label google drive link: 
     input(class='node-driveLink', value='#{locals.node.driveLink}') 

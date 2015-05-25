@@ -40,6 +40,11 @@ module.exports = function (app) {
     manage_controller.get_new(req, res)
   })
 
+  // get form for linking in node
+  app.get('/node/link', function (req, res) { 
+    manage_controller.get_link(req, res)
+  })
+
   // create a new node
   app.get('/node/create', function (req, res) { 
     manage_controller.post_new(req, res)

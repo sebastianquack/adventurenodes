@@ -2,24 +2,25 @@
 //  label title: 
 //  span(class='node-title')= locals.node.title
 p
-  label description: 
-  span(class='node-description')= locals.node.description
-p
-  label author: 
+  label by 
   span(class='node-author')= locals.node.author
 p
-  label play mode: 
+  span(class='node-description')= locals.node.description
+p
+  label play mode:  
   span(class='node-playmode')= locals.node.playMode
 p
-  label colors: 
-  span(style="color: #{locals.node.colors.borders}") borders 
-  span(style="color: #{locals.node.colors.links}") links 
+  span(style="color: #{locals.node.colors.borders}") border color
+  | 
+  span(style="color: #{locals.node.colors.links}") link color
 p
-  label published: 
-  span= locals.node.published
+  a(href=locals.node.driveLink) see spreadsheet
 p
-  label google drive link: 
-  a(href=locals.node.driveLink, target='_blank')= locals.node.driveLink
+  if !locals.node.published
+    span This node is not listed publicly, but will still be playable by anyone with the link.
+  else
+    span This node is published and will appear under 'published nodes'.
+  
 if locals.notice
   p
     span(class='edit-notice')= locals.notice

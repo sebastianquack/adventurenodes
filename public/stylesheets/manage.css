@@ -7,11 +7,15 @@ h1 {
 }
 
 * {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: Roboto, sans-serif;
 }
 
 #iframe_container {
 	margin-bottom: 2em;
+}
+
+a {
+	color: #4479BA;
 }
 
 a.disabled {
@@ -19,8 +23,42 @@ a.disabled {
 	text-decoration: none;
 	color: #666;
 	pointer-events: none;
+	display: none;
 }
+
+a.button-link {
+	text-decoration: none;
+	text-transform: uppercase;
+  padding: 10px 15px;
+  background: #4479BA;
+  color: #000;
+  vertical-align: middle;
+  font-size: 0.6em;
+  line-height: 1.2em;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: #bbb;
+  padding: 0.2em 0.5em;
+	margin-left: 0.2em;
+	
+}
+
 
 .node-details, .node-edit {
 	margin-bottom: 20px;
 }
+
+h4 {
+	margin: 0px;
+	font-weight: normal;
+}
+
+.node-title {
+	font-style: italic;
+	text-transform: uppercase;
+}
+
+ul li {
+	margin-bottom: 1em;
+}
+

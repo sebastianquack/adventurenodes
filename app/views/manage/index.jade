@@ -11,27 +11,35 @@ block content
   ul(id='example-nodes-list')
     each node in locals.exampleNodes
       li
-        =node.title
-        |  
-        a(href="/" + node.title) play
+        h4
+          span(class="node-title")=node.title 
+          | 
+          a(class="button-link", style="background-color: " + node.colors.links, href="/" + node.title) play
+        div(class="description")=node.description
+        a(href=node.driveLink) see spreadsheet
   
   h3 Published Nodes
   ul(id='public-nodes-list')
     each node in locals.publicNodes
       li
-        =node.title
-        | 
-        a(href="/" + node.title) play
+        h4
+          span(class="node-title")=node.title 
+          |  by 
+          span(class="node-author")=node.author
+          | 
+          a(class="button-link", style="background-color: " + node.colors.links, href="/" + node.title) play
+        div(class="description")=node.description
+        //a(href=node.driveLink) see spreadsheet
   
   h3 Your Nodes
   ul(id='created-nodes-list')
     if locals.createdNodes
       each node in locals.createdNodes
         li
-          =node.title
-          |  
-          a(href="/" + node.title) play
-          | 
+          h4
+            span(class="node-title")=node.title 
+            | 
+            a(class="button-link", style="background-color: " + node.colors.links, href="/" + node.title) play
           a(href="#" class="open-details" data-id="#{node._id}") details
 
   button(id='load-created-nodes') Load nodes created by you
@@ -40,6 +48,7 @@ block content
   p To get started, enter a title for your node and either start from scratch or base it on one of our examples. All your node's data is stored in google spreadsheets that you can edit alone or together with friends.
 
   button(id='create-node') Create a new node
+  button(id='link-node') Import an existing spreadsheet
   div(class='new-node')
     if locals.node
       include ./node_details_edit.jade

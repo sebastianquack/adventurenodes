@@ -145,9 +145,17 @@ $(document).ready(function() {
   $('#create-node').click(function() {
     $.get('/node/new/', function(data) {
       showEditView($('.new-node'), data, "new")
+    })    
+  })
+  
+  // submit a new title to create a node
+  $('#link-node').click(function() {
+    $.get('/node/link/', function(data) {
+      showEditView($('.new-node'), data, "new")
     })
     
   })
+  
 
   // embed functions
 
