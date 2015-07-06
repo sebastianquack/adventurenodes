@@ -263,7 +263,7 @@ $(document).ready(function() {
     if(previousRoom) {
       // update location bar in browser
       if(player.currentRoom.split("/")[0] != previousRoom.split("/")[0]) {
-        var newPath = '/play/' + player.currentRoom.split("/")[0]
+        var newPath = '/' + player.currentRoom.split("/")[0]
         console.log("pushState: " + newPath)
         history.pushState(null, null, newPath)
         everPushedSomething = true

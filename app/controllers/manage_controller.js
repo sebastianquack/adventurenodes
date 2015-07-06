@@ -2,6 +2,7 @@ var Util = require('./util.js')
 var mongoose = require('mongoose')
 var adventureNode = mongoose.model('AdventureNode')
 var nodePermission = mongoose.model('NodePermission')
+var nodeEdge = mongoose.model('NodeEdge')
 
 var drive_controller = require('drive_controller')
 
@@ -12,6 +13,16 @@ var playModes = ["Text Adventure", "Tabletop Roleplaying", "Collective Writing"]
 var getPublicNodes = function(callback) {
   adventureNode.find({published: true }).sort({title: 1}).exec(function(err, adventure_nodes) {
     callback(adventure_nodes) 
+  })  
+}
+
+// send back list of public nodes via json
+var load_graph_json = function(req, res) {
+  getPublicNodes(function(data) {    
+    nodeEdge.find({}, function(err, edges) {
+      res.setHeader('Content-Type', 'application/json')
+      res.send(JSON.stringify({ nodes: data, edges: edges }))
+    })    
   })  
 }
 
@@ -172,13 +183,39 @@ var post_new = function(req, res) {
 
 }
 
+// update a node edge
+
+var updateEdge = function(source_node, jump_target_name) {
+  
+  adventureNode.findOne({ title: jump_target_name }, function(err, target_node) {
+    if(err) return Util.handleError(err)
+  
+    nodeEdge.findOne({sourceNode: source_node._id, targetNode: target_node._id}, function(err, edge) {
+      if(err) return Util.handleError(err)
+        
+      if(!edge) {
+        console.log("creating new edge")
+        // create new edge
+        var edge = new nodeEdge({sourceNode: source_node._id, targetNode: target_node._id})
+        edge.save(function(err, data) {
+          if(err) return Util.handleError(err)
+          console.log(data)
+        })
+      } 
+        
+    })
+  })  
+}
+
+
 module.exports.index = index
+module.exports.load_graph_json = load_graph_json
 module.exports.get_new = get_new
 module.exports.get_link = get_link
 module.exports.post_new = post_new
 module.exports.get_node = get_node
 module.exports.update_node = update_node
 module.exports.loadCreated = loadCreated
-
+module.exports.updateEdge = updateEdge
 
     

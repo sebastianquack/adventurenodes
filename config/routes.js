@@ -14,6 +14,10 @@ module.exports = function (app) {
   app.get('/', function (req, res) { 
     manage_controller.index(req, res)
   })
+  
+  app.get('/manage/load_graph_json', function (req, res) {
+    manage_controller.load_graph_json(req, res)
+  })
 
   // send user to google to get info
   app.get('/manage/load_created', function (req, res) {

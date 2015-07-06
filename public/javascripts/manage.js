@@ -1,6 +1,43 @@
 var socket
 var ifrm = null
 
+var updateGraph = function() {
+  $.get('/manage/load_graph_json', function(data) {
+    
+    // create sigma formatted data
+    sigmaData = { nodes: [], edges: [] }
+    
+    data.nodes.forEach(function(node) {      
+      sigmaData.nodes.push({
+        id: node._id,
+        label: node.title,
+        x: Math.random(),
+        y: Math.random(),
+        size: 1,
+        color: '#666'
+      })
+    })
+    data.edges.forEach(function(edge) {
+      var i = 0
+      sigmaData.edges.push({
+        id: "e" + i,
+        source: edge.sourceNode,
+        target: edge.targetNode,        
+        size: 1,
+        color: '#ccc',
+        type: "arrow",
+      })
+    })
+        
+    var s = new sigma({
+      container: 'graph',
+      graph: sigmaData
+    })
+    //s.startForceAtlas2() // haven't figured out how this works yet
+    
+  })
+}
+
 var loadDetailView = function(target) {
   closeDetailViews()
   $('a.open-details').removeClass("disabled")
@@ -116,6 +153,9 @@ $(document).ready(function() {
   // reset url path
   history.pushState(null, null, "")
     
+  // load public node graph  
+  updateGraph()
+    
   // load nodes created by user
   $('#load-created-nodes').click(function() {
     window.location = "/manage/load_created"
@@ -156,9 +196,7 @@ $(document).ready(function() {
     
   })
   
-
   // embed functions
-
   $('#width').val(300) // default values
   $('#height').val(400) // default values
 

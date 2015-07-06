@@ -9,6 +9,7 @@ var Drive = require('./drive_controller.js')
 var Util = require('./util.js')
 var Chat = require('./chat_controller.js')
 var Intro = require('./intro_controller.js')
+var Manage = require('./manage_controller.js')
 
 var startingNodes = ['example1']
 var Spreadsheets = require('drive_controller')
@@ -305,6 +306,11 @@ function processPlayerAction(socket, player, input, marker) {
       enterRoom(player, player.currentNode.title + "/" + jump, socket)
     }
     else { // jump to a whole different node
+      
+      // update edges database with new connection
+      Manage.updateEdge(player.currentNode, jump)
+      
+      // move player to room
       enterRoom(player, jump, socket)
     }
   }  
