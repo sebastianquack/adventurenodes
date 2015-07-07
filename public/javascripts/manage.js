@@ -27,6 +27,7 @@ var updateGraph = function() {
         color: '#ccc',
         type: "arrow",
       })
+      i += 1
     })
         
     var s = new sigma({
