@@ -298,6 +298,7 @@ function processPlayerAction(socket, player, input, marker) {
   effects.forEach(function(effect) { setWV(player.currentNode, effect) })
 
   // do jump
+  jump = jump.trim()
   if (jump != "") {
     if(markers.indexOf(jump) != -1) { // check if jump is to a marker
       processPlayerAction(socket, player, "", jump)
@@ -306,6 +307,7 @@ function processPlayerAction(socket, player, input, marker) {
       enterRoom(player, player.currentNode.title + "/" + jump, socket)
     }
     else { // jump to a whole different node
+      jump = jump.toLowerCase()
       
       // update edges database with new connection
       Manage.updateEdge(player.currentNode, jump)
@@ -360,7 +362,7 @@ var handleInput = function(socket, player, input) {
   if(!input) {
     
     // determine the name of the node the player wants to enter
-    var requestedNode = player.currentRoom.split("/")[0] 
+    var requestedNode = player.currentRoom.split("/")[0].trim().toLowerCase() 
     
     // if player doesn't know where to be - assign to random node
     if(!requestedNode || player.currentRoom == undefined) {

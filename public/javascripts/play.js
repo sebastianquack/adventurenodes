@@ -150,7 +150,7 @@ $(document).ready(function() {
   var target_node = null
   var path = window.location.pathname.split('/')
   if(path.length > 1) {
-      target_node = path[path.length - 1]
+      target_node = path[path.length - 1].trim().toLowerCase()
       $('#node-title').html(target_node)
   }
   

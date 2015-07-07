@@ -113,7 +113,7 @@ var setupDetailEvents = function() {
     e.preventDefault()
     var node_id = $(e.target).parent().data('id')
     var body = {
-      title: $('input.node-title').val(),
+      title: $('input.node-title').val().trim().toLowerCase().replace(/ /g,''),
       description: $('input.node-description').val(),      
       author: $('input.node-author').val(),
       playMode: $('select.node-playMode').val(),
