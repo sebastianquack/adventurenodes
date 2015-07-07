@@ -189,21 +189,23 @@ var updateEdge = function(source_node, jump_target_name) {
   
   adventureNode.findOne({ title: jump_target_name }, function(err, target_node) {
     if(err) return Util.handleError(err)
-  
-    nodeEdge.findOne({sourceNode: source_node._id, targetNode: target_node._id}, function(err, edge) {
-      if(err) return Util.handleError(err)
+      
+    if(target_node) {
+      nodeEdge.findOne({sourceNode: source_node._id, targetNode: target_node._id}, function(err, edge) {
+        if(err) return Util.handleError(err)
         
-      if(!edge) {
-        console.log("creating new edge")
-        // create new edge
-        var edge = new nodeEdge({sourceNode: source_node._id, targetNode: target_node._id})
-        edge.save(function(err, data) {
-          if(err) return Util.handleError(err)
-          console.log(data)
-        })
-      } 
+        if(!edge) {
+          console.log("creating new edge")
+          // create new edge
+          var edge = new nodeEdge({sourceNode: source_node._id, targetNode: target_node._id})
+          edge.save(function(err, data) {
+            if(err) return Util.handleError(err)
+            console.log(data)
+          })
+        } 
         
-    })
+      })
+    }
   })  
 }
 
