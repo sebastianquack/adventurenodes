@@ -17,8 +17,8 @@ var updateGraph = function() {
         color: '#666'
       })
     })
+    var i = 0  
     data.edges.forEach(function(edge) {
-      var i = 0
       sigmaData.edges.push({
         id: "e" + i,
         source: edge.sourceNode,
